@@ -1,8 +1,10 @@
 import { create } from 'zustand'
 import * as db from './db'
 import { SAMPLE_ROUTES } from './utils/sampleData'
+import { getCurrentUser, signOut } from './auth'
 
 export const useStore = create((set, get) => ({
+  currentUser: getCurrentUser(),
   trips: [],
   places: [],
   routes: [],
@@ -12,6 +14,9 @@ export const useStore = create((set, get) => ({
   currentPath: [],
   selectedRoute: null,
   followingRoute: null,
+
+  setUser: (user) => set({ currentUser: user }),
+  logout: () => { signOut(); set({ currentUser: null, trips: [], places: [], routes: [], activeTrip: null, trackingActive: false, currentPath: [] }) },
 
   loadAll: async () => {
     const [trips, places, routes] = await Promise.all([

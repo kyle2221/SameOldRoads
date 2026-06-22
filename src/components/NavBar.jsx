@@ -14,9 +14,10 @@ export default function NavBar() {
   return (
     <nav style={{
       display: 'flex',
-      background: 'var(--green-800)',
-      borderTop: '1px solid var(--green-600)',
+      background: '#ffffff',
+      borderTop: '1px solid var(--border)',
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      boxShadow: 'var(--shadow-nav)',
     }}>
       {tabs.map(({ id, label, icon: Icon }) => {
         const active = activeTab === id
@@ -29,46 +30,48 @@ export default function NavBar() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 2,
-              padding: '10px 0 8px',
+              gap: 3,
+              padding: '11px 0 9px',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: active ? 'var(--khaki-300)' : 'var(--green-400)',
+              color: active ? 'var(--orange)' : 'var(--text-mute)',
               position: 'relative',
+              transition: 'color 0.2s',
             }}
           >
             {id === 'map' && trackingActive && (
               <span style={{
                 position: 'absolute',
-                top: 6,
+                top: 7,
                 right: '50%',
-                transform: 'translateX(14px)',
+                transform: 'translateX(15px)',
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: '#e53',
+                background: 'var(--orange)',
+                boxShadow: '0 0 0 2px #fff',
                 animation: 'pulse 1.5s infinite',
               }} />
             )}
             <Icon size={22} active={active} />
-            <span style={{ fontSize: 10, fontWeight: active ? 600 : 400, letterSpacing: 0.3 }}>{label}</span>
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, letterSpacing: 0.2 }}>{label}</span>
             {active && (
               <span style={{
                 position: 'absolute',
-                bottom: 0,
-                left: '20%',
-                right: '20%',
-                height: 2,
-                background: 'var(--khaki-300)',
-                borderRadius: 2,
+                top: 0,
+                left: '30%',
+                right: '30%',
+                height: 3,
+                background: 'var(--orange)',
+                borderRadius: '0 0 3px 3px',
               }} />
             )}
           </button>
         )
       })}
       <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
       `}</style>
     </nav>
   )
@@ -76,7 +79,7 @@ export default function NavBar() {
 
 function HomeIcon({ size, active }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={active ? 'var(--khaki-300)' : 'none'} stroke="currentColor" strokeWidth={1.8}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={active ? 'var(--orange-wash)' : 'none'} stroke="currentColor" strokeWidth={1.8}>
       <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
       <path d="M9 21V12h6v9"/>
     </svg>
@@ -86,7 +89,7 @@ function HomeIcon({ size, active }) {
 function MapIcon({ size, active }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <circle cx="12" cy="10" r="3" fill={active ? 'var(--khaki-300)' : 'none'}/>
+      <circle cx="12" cy="10" r="3" fill={active ? 'var(--orange-wash)' : 'none'}/>
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
     </svg>
   )
@@ -95,8 +98,8 @@ function MapIcon({ size, active }) {
 function RouteIcon({ size, active }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <circle cx="5" cy="19" r="2" fill={active ? 'var(--khaki-300)' : 'none'}/>
-      <circle cx="19" cy="5" r="2" fill={active ? 'var(--khaki-300)' : 'none'}/>
+      <circle cx="5" cy="19" r="2" fill={active ? 'var(--orange-wash)' : 'none'}/>
+      <circle cx="19" cy="5" r="2" fill={active ? 'var(--orange-wash)' : 'none'}/>
       <path d="M7 19h4a4 4 0 004-4V9a4 4 0 014-4"/>
     </svg>
   )
@@ -105,7 +108,7 @@ function RouteIcon({ size, active }) {
 function PlaceIcon({ size, active }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" fill={active ? 'var(--khaki-300)' : 'none'}/>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" fill={active ? 'var(--orange-wash)' : 'none'}/>
     </svg>
   )
 }
@@ -113,7 +116,7 @@ function PlaceIcon({ size, active }) {
 function TripIcon({ size, active }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <rect x="3" y="4" width="18" height="16" rx="2" fill={active ? 'var(--khaki-300)' : 'none'} fillOpacity={0.3}/>
+      <rect x="3" y="4" width="18" height="16" rx="2" fill={active ? 'var(--orange-wash)' : 'none'}/>
       <path d="M3 9h18M8 4v5M16 4v5"/>
     </svg>
   )

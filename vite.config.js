@@ -20,14 +20,22 @@ export default defineConfig({
               expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
+          {
+            urlPattern: /^https:\/\/router\.project-osrm\.org\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'osrm-routes',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 60 },
+            },
+          },
         ],
       },
       manifest: {
         name: 'Same Old Roads',
         short_name: 'SameOldRoads',
         description: 'Track your trips, follow curated routes, discover places',
-        theme_color: '#1a3a2a',
-        background_color: '#0f1f15',
+        theme_color: '#ff6a2b',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

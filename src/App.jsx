@@ -6,16 +6,21 @@ import MapPage from './pages/MapPage'
 import RoutesPage from './pages/RoutesPage'
 import PlacesPage from './pages/PlacesPage'
 import TripsPage from './pages/TripsPage'
+import AuthPage from './pages/AuthPage'
 
 export default function App() {
-  const { loadAll, activeTab } = useStore()
+  const { loadAll, activeTab, currentUser, setUser } = useStore()
 
   useEffect(() => {
-    loadAll()
-  }, [loadAll])
+    if (currentUser) loadAll()
+  }, [currentUser, loadAll])
+
+  if (!currentUser) {
+    return <AuthPage onAuth={setUser} />
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--green-950)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         <div style={{ display: activeTab === 'home' ? 'block' : 'none', height: '100%' }}><HomePage /></div>
         <div style={{ display: activeTab === 'map' ? 'block' : 'none', height: '100%' }}><MapPage /></div>

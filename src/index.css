@@ -1,19 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --green-950: #0a1a10;
-  --green-900: #0f2418;
-  --green-800: #163520;
-  --green-700: #1a3a2a;
-  --green-600: #245233;
-  --green-500: #2e6b40;
-  --green-400: #3d8a52;
-  --green-300: #5aaa6e;
-  --khaki-100: #f0e8d0;
-  --khaki-200: #e8dab8;
-  --khaki-300: #d4c490;
-  --khaki-400: #b8a870;
-  --khaki-muted: #c8b87a;
+  /* Base44 — clean white surfaces */
+  --bg: #ffffff;
+  --bg-soft: #fbfaf9;
+  --surface: #ffffff;
+  --surface-2: #f7f6f4;
+  --sunk: #f1f0ed;
+  --border: #ededed;
+  --border-soft: #f4f4f4;
+
+  /* Orange accent system */
+  --orange: #ff6a2b;
+  --orange-deep: #ef5616;
+  --orange-light: #ff8a52;
+  --orange-wash: #fff1e8;
+  --orange-tint: #ffe5d4;
+  --orange-glow: rgba(255, 106, 43, 0.22);
+
+  /* Text */
+  --text: #0e0e10;
+  --text-soft: #57575c;
+  --text-mute: #9b9ba0;
+  --on-orange: #ffffff;
+
+  --shadow-card: 0 4px 22px rgba(20, 20, 30, 0.06);
+  --shadow-soft: 0 2px 10px rgba(20, 20, 30, 0.05);
+  --shadow-pop: 0 14px 44px rgba(20, 20, 30, 0.16);
+  --shadow-nav: 0 -2px 20px rgba(30, 20, 10, 0.07);
 }
 
 * {
@@ -25,51 +39,60 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: var(--green-950);
-  color: var(--khaki-100);
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overscroll-behavior: none;
   margin: 0;
   padding: 0;
 }
 
-.leaflet-container {
-  background: #1a2e1a !important;
+input::placeholder, textarea::placeholder {
+  color: var(--text-mute);
 }
 
+.leaflet-container {
+  background: #eef0f2 !important;
+}
+
+/* Clean, light map so the orange route line pops */
 .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) saturate(0.6) brightness(0.75);
+  filter: grayscale(0.28) brightness(1.05) contrast(0.9) saturate(0.85);
 }
 
 .leaflet-control-zoom a {
-  background: var(--green-700) !important;
-  color: var(--khaki-100) !important;
-  border-color: var(--green-600) !important;
+  background: #ffffff !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: var(--green-800) !important;
-  color: var(--khaki-100) !important;
-  border: 1px solid var(--green-600) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  background: #ffffff !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+
+.leaflet-popup-content-wrapper b {
+  color: var(--orange-deep) !important;
 }
 
 .leaflet-popup-tip {
-  background: var(--green-800) !important;
+  background: #ffffff !important;
 }
 
 .leaflet-popup-close-button {
-  color: var(--khaki-300) !important;
+  color: var(--text-mute) !important;
 }
 
 ::-webkit-scrollbar {
   width: 3px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--green-900);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--green-600);
+  background: var(--border);
   border-radius: 2px;
 }
