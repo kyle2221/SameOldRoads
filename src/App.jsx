@@ -1,27 +1,52 @@
-import { useEffect } from 'react'
 import { useStore } from './store'
-import NavBar from './components/NavBar'
-import HomePage from './pages/HomePage'
-import MapPage from './pages/MapPage'
-import RoutesPage from './pages/RoutesPage'
-import PlacesPage from './pages/PlacesPage'
-import TripsPage from './pages/TripsPage'
-import AuthPage from './pages/AuthPage'
+import TopBar from './components/TopBar'
+import TickerTape from './components/TickerTape'
+import Sidebar from './components/Sidebar'
+import StatusBar from './components/StatusBar'
+import CommandPalette from './components/CommandPalette'
+
+import Dashboard from './modules/Dashboard'
+import WatchlistModule from './modules/WatchlistModule'
+import SecurityOverview from './modules/SecurityOverview'
+import ChartModule from './modules/ChartModule'
+import NewsModule from './modules/NewsModule'
+import MoversModule from './modules/MoversModule'
+import HeatmapModule from './modules/HeatmapModule'
+import EconomicCalendar from './modules/EconomicCalendar'
+import Portfolio from './modules/Portfolio'
+import Screener from './modules/Screener'
+import HelpModule from './modules/HelpModule'
+
+const MODULES = {
+  dash: Dashboard,
+  watch: WatchlistModule,
+  sec: SecurityOverview,
+  chart: ChartModule,
+  news: NewsModule,
+  movers: MoversModule,
+  heat: HeatmapModule,
+  eco: EconomicCalendar,
+  port: Portfolio,
+  screener: Screener,
+  help: HelpModule,
+}
 
 export default function App() {
-  const { loadAll, activeTab, currentUser, setUser } = useStore()
-  useEffect(() => { if (currentUser) loadAll() }, [currentUser, loadAll])
-  if (!currentUser) return <AuthPage onAuth={setUser} />
+  const activeModule = useStore((s) => s.activeModule)
+  const Module = MODULES[activeModule] || Dashboard
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ display: activeTab === 'home' ? 'block' : 'none', height: '100%' }}><HomePage /></div>
-        <div style={{ display: activeTab === 'map' ? 'block' : 'none', height: '100%' }}><MapPage /></div>
-        <div style={{ display: activeTab === 'routes' ? 'block' : 'none', height: '100%' }}><RoutesPage /></div>
-        <div style={{ display: activeTab === 'places' ? 'block' : 'none', height: '100%' }}><PlacesPage /></div>
-        <div style={{ display: activeTab === 'trips' ? 'block' : 'none', height: '100%' }}><TripsPage /></div>
+      <TopBar />
+      <TickerTape />
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        <Sidebar />
+        <main style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
+          <Module />
+        </main>
       </div>
-      <NavBar />
+      <StatusBar />
+      <CommandPalette />
     </div>
   )
 }

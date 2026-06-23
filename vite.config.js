@@ -11,36 +11,18 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'osm-tiles',
-              expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/router\.project-osrm\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'osrm-routes',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 60 },
-            },
-          },
-        ],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
-        name: 'Same Old Roads',
-        short_name: 'SameOldRoads',
-        description: 'Track your trips, follow curated routes, discover places',
-        theme_color: '#ff6a2b',
-        background_color: '#ffffff',
+        name: 'NXT Terminal',
+        short_name: 'NXT',
+        description: 'A fast, black-themed market terminal — quotes, charts, news, screening and portfolio analytics.',
+        theme_color: '#000000',
+        background_color: '#000000',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'landscape',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
         ],
       },
     }),
