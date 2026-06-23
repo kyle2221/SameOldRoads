@@ -14,3 +14,9 @@ export function formatDuration(ms) {
 export function formatDate(ts) {
   return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
+
+// ms = meters per second → mph
+export function formatSpeed(mps) {
+  if (!mps || mps < 0.3) return '0 mph'
+  return `${Math.round(mps * 2.23694)} mph`
+}

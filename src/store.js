@@ -53,13 +53,19 @@ export const useStore = create((set, get) => ({
   appendPathPoint: async (latlng) => {
     const { activeTrip, currentPath } = get()
     if (!activeTrip) return
-    const newPath = [...currentPath, latlng]
+    const point = { ...latlng, ts: Date.now() }
+    const newPath = [...currentPath, point]
     let dist = activeTrip.distance
+    let segSpeed = 0
     if (newPath.length > 1) {
       const prev = newPath[newPath.length - 2]
-      dist += haversine(prev, latlng)
+      const d = haversine(prev, point)
+      dist += d
+      const dt = (point.ts - (prev.ts || point.ts)) / 1000
+      if (dt > 0 && dt < 60) segSpeed = d / dt
     }
-    const updated = { ...activeTrip, path: newPath, distance: dist }
+    const maxSpeed = Math.max(activeTrip.maxSpeed || 0, segSpeed)
+    const updated = { ...activeTrip, path: newPath, distance: dist, maxSpeed }
     await db.saveTrip(updated)
     set((s) => ({
       currentPath: newPath,
@@ -72,11 +78,14 @@ export const useStore = create((set, get) => ({
     const { activeTrip, currentPath } = get()
     if (!activeTrip) return
     const now = Date.now()
+    const duration = now - activeTrip.startTime
+    const avgSpeed = duration > 0 ? (activeTrip.distance / (duration / 1000)) : 0
     const updated = {
       ...activeTrip,
       path: currentPath,
-      duration: now - activeTrip.startTime,
+      duration,
       endTime: now,
+      avgSpeed,
     }
     await db.saveTrip(updated)
     set((s) => ({

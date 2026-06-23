@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store'
-import { formatDistance, formatDuration, formatDate } from '../utils/format'
+import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 
 export default function TripsPage() {
@@ -87,6 +87,24 @@ function Chip({ icon, label }) {
   )
 }
 
+async function handleShare(trip, places) {
+  const text = [
+    `🚗 ${trip.name}`,
+    `📅 ${new Date(trip.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`,
+    `📍 ${formatDistance(trip.distance || 0)} · ${formatDuration(trip.duration || 0)}`,
+    trip.avgSpeed ? `⚡ Avg ${formatSpeed(trip.avgSpeed)} · Top ${formatSpeed(trip.maxSpeed || 0)}` : '',
+    places.length ? `\nStops:\n${places.map(p => `  ${p.type === 'restaurant' ? '🍽️' : '📍'} ${p.name}`).join('\n')}` : '',
+    '\nTracked with Same Old Roads',
+  ].filter(Boolean).join('\n')
+
+  if (navigator.share) {
+    await navigator.share({ title: trip.name, text }).catch(() => {})
+  } else {
+    await navigator.clipboard.writeText(text).catch(() => {})
+    alert('Trip summary copied to clipboard!')
+  }
+}
+
 function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -134,15 +152,17 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
 
       <div style={{ padding: '4px 16px 0' }}>
         {/* Stats */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
           {[
             { label: 'Distance', value: formatDistance(trip.distance || 0) },
             { label: 'Duration', value: formatDuration(trip.duration || 0) },
             { label: 'Stops', value: places.length },
+            { label: 'Avg Speed', value: formatSpeed(trip.avgSpeed || 0) },
+            { label: 'Top Speed', value: formatSpeed(trip.maxSpeed || 0) },
           ].map(s => (
-            <div key={s.label} style={{ flex: 1, background: 'var(--surface)', borderRadius: 14, padding: '13px 6px', textAlign: 'center', border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)' }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--orange-deep)', fontFamily: "'Rajdhani', sans-serif", letterSpacing: -0.3 }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
+            <div key={s.label} style={{ flex: '1 1 calc(33% - 8px)', minWidth: 80, background: 'var(--surface)', borderRadius: 14, padding: '12px 8px', textAlign: 'center', border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)' }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--orange-deep)', fontFamily: "'Rajdhani', sans-serif", letterSpacing: -0.3 }}>{s.value}</div>
+              <div style={{ fontSize: 9, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -163,12 +183,27 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
         {/* Actions */}
         <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button onClick={handleSaveAsRoute} disabled={saving || saved} style={{
-            padding: 15, borderRadius: 14, background: saved ? 'var(--surface-2)' : 'linear-gradient(135deg, #ff8a52, #ef5616)',
-            border: saved ? '1px solid var(--border)' : 'none', color: saved ? 'var(--text-soft)' : '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer',
+            padding: 15, borderRadius: 14,
+            background: saved ? 'var(--surface-2)' : 'linear-gradient(135deg, #ff8a52, #ef5616)',
+            border: saved ? '1px solid var(--border)' : 'none',
+            color: saved ? 'var(--text-soft)' : '#fff',
+            fontSize: 17, fontWeight: 700, cursor: 'pointer',
             boxShadow: saved ? 'none' : '0 5px 16px rgba(239,86,22,0.3)',
+            fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
           }}>
             {saved ? '✓ Saved as Route' : saving ? 'Saving...' : 'Save as Shareable Route'}
           </button>
+
+          <button onClick={() => handleShare(trip, places)} style={{
+            padding: 13, borderRadius: 14, background: 'var(--surface)',
+            border: '1px solid var(--border)', color: 'var(--text)',
+            fontSize: 16, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
+          }}>
+            <span>↗️</span> Share Trip
+          </button>
+
           {confirmDel ? (
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setConfirmDel(false)} style={{ flex: 1, padding: 13, borderRadius: 13, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-soft)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
@@ -188,12 +223,15 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
 function PlaceGroup({ title, places }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-soft)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{title}</div>
-      <div style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', padding: '4px 16px' }}>
+      <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-mute)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: "'Rajdhani', sans-serif" }}>{title}</div>
+      <div style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', overflow: 'hidden' }}>
         {places.map((p, i) => (
-          <div key={p.id} style={{ padding: '12px 0', borderBottom: i === places.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{p.name}</div>
-            {p.notes && <div style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 3 }}>{p.notes}</div>}
+          <div key={p.id} style={{ borderBottom: i === places.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>
+            {p.photo && <img src={p.photo} alt={p.name} style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />}
+            <div style={{ padding: '12px 16px' }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{p.name}</div>
+              {p.notes && <div style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 3 }}>{p.notes}</div>}
+            </div>
           </div>
         ))}
       </div>

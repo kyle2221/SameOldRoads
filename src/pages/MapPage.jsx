@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useStore } from '../store'
-import { formatDistance, formatDuration } from '../utils/format'
+import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
 import { routeAlongRoads } from '../utils/routing'
+import { getWeather } from '../utils/weather'
+import { geocodeSearch } from '../utils/geocode'
 
 export default function MapPage() {
   const mapRef = useRef(null)
@@ -9,26 +11,31 @@ export default function MapPage() {
   const pathLayerRef = useRef(null)
   const routeLayerRef = useRef(null)
   const markersRef = useRef([])
+  const userMarkerRef = useRef(null)
   const watchIdRef = useRef(null)
   const roRef = useRef(null)
 
   const { trackingActive, currentPath, activeTrip, startTrip, appendPathPoint, stopTrip, places, followingRoute, stopFollowing, addPlace } = useStore()
   const [elapsed, setElapsed] = useState(0)
+  const [currentSpeed, setCurrentSpeed] = useState(0)
+  const [weather, setWeather] = useState(null)
   const [showNameModal, setShowNameModal] = useState(false)
   const [tripName, setTripName] = useState('')
   const [showAddPlace, setShowAddPlace] = useState(false)
-  const [newPlace, setNewPlace] = useState({ type: 'restaurant', name: '', notes: '' })
+  const [newPlace, setNewPlace] = useState({ type: 'restaurant', name: '', notes: '', photo: null })
   const [pendingLatLng, setPendingLatLng] = useState(null)
   const [userPos, setUserPos] = useState(null)
+  const [search, setSearch] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const searchTimerRef = useRef(null)
 
   useEffect(() => {
     if (mapInstanceRef.current) return
     import('leaflet').then(L => {
       const map = L.default.map(mapRef.current, {
-        center: [37.7, -98.5],
-        zoom: 4,
-        zoomControl: true,
-        attributionControl: false,
+        center: [37.7, -98.5], zoom: 4,
+        zoomControl: true, attributionControl: false,
       })
       L.default.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
       map.on('click', (e) => {
@@ -37,11 +44,9 @@ export default function MapPage() {
         setShowAddPlace(true)
       })
       mapInstanceRef.current = map
-      pathLayerRef.current = L.default.polyline([], { color: '#ff6a2b', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }).addTo(map)
-
-      // The Track map stays mounted while hidden behind other tabs, so it can
-      // initialise at 0×0. Re-sync size (and re-fit any followed route) once it
-      // gets real dimensions.
+      pathLayerRef.current = L.default.polyline([], {
+        color: '#ff6a2b', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round',
+      }).addTo(map)
       if ('ResizeObserver' in window) {
         roRef.current = new ResizeObserver(() => {
           map.invalidateSize()
@@ -58,20 +63,19 @@ export default function MapPage() {
     }
   }, [])
 
-  // Update live tracking polyline
+  // Live tracking polyline
   useEffect(() => {
     if (!pathLayerRef.current || !currentPath.length) return
     pathLayerRef.current.setLatLngs(currentPath.map(p => [p.lat, p.lng]))
   }, [currentPath])
 
-  // Draw the followed route as an orange road-following line
+  // Followed route
   useEffect(() => {
     if (!mapInstanceRef.current) return
     let cancelled = false
     import('leaflet').then(async L => {
       if (routeLayerRef.current) { routeLayerRef.current.remove(); routeLayerRef.current = null }
       if (!followingRoute) return
-
       const draw = (latlngs) => {
         if (cancelled || !mapInstanceRef.current) return
         if (routeLayerRef.current) { routeLayerRef.current.remove(); routeLayerRef.current = null }
@@ -88,8 +92,6 @@ export default function MapPage() {
         mapInstanceRef.current.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 13 })
         routeLayerRef.current = group
       }
-
-      // instant straight line, then upgrade to road-following
       draw(followingRoute.path.map(p => [p.lat, p.lng]))
       const routed = await routeAlongRoads(followingRoute.path)
       if (!cancelled && routed.length) draw(routed)
@@ -97,7 +99,7 @@ export default function MapPage() {
     return () => { cancelled = true }
   }, [followingRoute])
 
-  // Draw saved places
+  // Place markers
   useEffect(() => {
     if (!mapInstanceRef.current) return
     import('leaflet').then(L => {
@@ -105,9 +107,12 @@ export default function MapPage() {
       markersRef.current = []
       places.forEach(pl => {
         const icon = pl.type === 'restaurant' ? '🍽️' : '📍'
+        const photoHtml = pl.photo
+          ? `<img src="${pl.photo}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;margin-top:6px;"/>`
+          : ''
         const m = L.default.marker([pl.lat, pl.lng], {
           icon: L.default.divIcon({ html: `<div style="font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))">${icon}</div>`, iconSize: [24, 24], className: '' })
-        }).bindPopup(`<b>${pl.name}</b>${pl.notes ? `<br><small>${pl.notes}</small>` : ''}`)
+        }).bindPopup(`<b>${pl.name}</b>${pl.notes ? `<br><small>${pl.notes}</small>` : ''}${photoHtml}`)
         m.addTo(mapInstanceRef.current)
         markersRef.current.push(m)
       })
@@ -121,14 +126,49 @@ export default function MapPage() {
     return () => clearInterval(id)
   }, [trackingActive, activeTrip])
 
+  // Search debounce
+  useEffect(() => {
+    if (!search.trim()) { setSearchResults([]); return }
+    clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(async () => {
+      setSearchLoading(true)
+      const results = await geocodeSearch(search)
+      setSearchResults(results)
+      setSearchLoading(false)
+    }, 500)
+    return () => clearTimeout(searchTimerRef.current)
+  }, [search])
+
+  function updateUserDot(latlng) {
+    if (!mapInstanceRef.current) return
+    import('leaflet').then(L => {
+      if (!userMarkerRef.current) {
+        userMarkerRef.current = L.default.marker([latlng.lat, latlng.lng], {
+          icon: L.default.divIcon({
+            html: `<div style="width:16px;height:16px;border-radius:50%;background:#4287f5;border:3px solid #fff;box-shadow:0 0 0 4px rgba(66,135,245,0.25),0 2px 8px rgba(0,0,0,0.3)"></div>`,
+            iconSize: [16, 16], iconAnchor: [8, 8], className: '',
+          }),
+          zIndexOffset: 500,
+        }).addTo(mapInstanceRef.current)
+      } else {
+        userMarkerRef.current.setLatLng([latlng.lat, latlng.lng])
+      }
+    })
+  }
+
   function startGPS() {
     if (!navigator.geolocation) return alert('Geolocation not available')
     watchIdRef.current = navigator.geolocation.watchPosition(
       pos => {
         const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        const speed = pos.coords.speed ?? 0
         setUserPos(latlng)
+        setCurrentSpeed(speed)
         appendPathPoint(latlng)
+        updateUserDot(latlng)
         mapInstanceRef.current?.setView([latlng.lat, latlng.lng], 15)
+        // Fetch weather once on first fix
+        if (!weather) getWeather(latlng.lat, latlng.lng).then(w => w && setWeather(w))
       },
       err => console.warn(err),
       { enableHighAccuracy: true, maximumAge: 2000 }
@@ -140,6 +180,8 @@ export default function MapPage() {
     await startTrip(tripName.trim())
     setShowNameModal(false)
     setTripName('')
+    setSearch('')
+    setSearchResults([])
     startGPS()
   }
 
@@ -148,8 +190,22 @@ export default function MapPage() {
       navigator.geolocation.clearWatch(watchIdRef.current)
       watchIdRef.current = null
     }
+    setCurrentSpeed(0)
+    setWeather(null)
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove()
+      userMarkerRef.current = null
+    }
     await stopTrip()
     setElapsed(0)
+  }
+
+  function handlePhoto(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => setNewPlace(p => ({ ...p, photo: ev.target.result }))
+    reader.readAsDataURL(file)
   }
 
   async function handleSavePlace() {
@@ -164,7 +220,13 @@ export default function MapPage() {
     }
     await addPlace(place)
     setShowAddPlace(false)
-    setNewPlace({ type: 'restaurant', name: '', notes: '' })
+    setNewPlace({ type: 'restaurant', name: '', notes: '', photo: null })
+  }
+
+  function flyTo({ lat, lng }) {
+    setSearch('')
+    setSearchResults([])
+    mapInstanceRef.current?.setView([lat, lng], 14)
   }
 
   return (
@@ -174,49 +236,88 @@ export default function MapPage() {
       `}</style>
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
 
+      {/* Search bar — shown when not tracking */}
+      {!trackingActive && (
+        <div style={{ position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000 }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)', borderRadius: 16,
+            boxShadow: '0 6px 24px rgba(0,0,0,0.18)', border: '1px solid rgba(0,0,0,0.07)',
+            overflow: 'hidden',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 10 }}>
+              <span style={{ fontSize: 16, opacity: 0.5 }}>🔍</span>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search places, cities, roads..."
+                style={{
+                  flex: 1, border: 'none', outline: 'none', fontSize: 15,
+                  background: 'transparent', color: 'var(--text)',
+                  fontFamily: "'Rajdhani', sans-serif", fontWeight: 500,
+                }}
+              />
+              {(search || searchLoading) && (
+                <button onClick={() => { setSearch(''); setSearchResults([]) }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text-mute)', lineHeight: 1 }}>
+                  {searchLoading ? '…' : '✕'}
+                </button>
+              )}
+            </div>
+            {searchResults.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--border)' }}>
+                {searchResults.map((r, i) => (
+                  <button key={i} onClick={() => flyTo(r)} style={{
+                    width: '100%', padding: '12px 16px', background: 'none', border: 'none',
+                    borderBottom: i < searchResults.length - 1 ? '1px solid var(--border-soft)' : 'none',
+                    textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <span style={{ fontSize: 14 }}>📍</span>
+                    <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, lineHeight: 1.4 }}>{r.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tracking HUD */}
       {trackingActive && (
-        <div style={{
-          position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000,
-        }}>
-          {/* Trip name badge */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            marginBottom: 8, paddingLeft: 4,
-          }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'block', animation: 'recPulse 1.4s ease-in-out infinite', boxShadow: '0 0 6px rgba(255,59,48,0.6)' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1, textShadow: '0 1px 4px rgba(0,0,0,0.5)', textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{activeTrip?.name}</span>
+        <div style={{ position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000 }}>
+          {/* Top row: trip name + weather */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingLeft: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'block', animation: 'recPulse 1.4s ease-in-out infinite', boxShadow: '0 0 6px rgba(255,59,48,0.6)' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1, textShadow: '0 1px 4px rgba(0,0,0,0.5)', textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{activeTrip?.name}</span>
+            </div>
+            {weather && (
+              <div style={{ background: 'rgba(14,8,4,0.7)', backdropFilter: 'blur(10px)', borderRadius: 20, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 5, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ fontSize: 14 }}>{weather.icon}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Rajdhani', sans-serif" }}>{weather.temp}°F</span>
+              </div>
+            )}
           </div>
-          {/* Main HUD */}
+          {/* Stats row */}
           <div style={{
-            background: 'rgba(14,8,4,0.86)',
-            backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-            borderRadius: 22, padding: '16px 18px',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', gap: 0,
+            background: 'rgba(14,8,4,0.86)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+            borderRadius: 22, padding: '14px 16px',
+            border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center',
           }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Duration</div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', letterSpacing: -0.5, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif" }}>{formatDuration(elapsed)}</div>
-            </div>
-            <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', margin: '0 16px' }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Distance</div>
-              <div style={{
-                fontSize: 32, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif",
-                background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              }}>{formatDistance(activeTrip?.distance || 0)}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginLeft: 8 }}>
+            <HudStat label="Duration" value={formatDuration(elapsed)} />
+            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)', margin: '0 12px' }} />
+            <HudStat label="Distance" value={formatDistance(activeTrip?.distance || 0)} orange />
+            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)', margin: '0 12px' }} />
+            <HudStat label="Speed" value={formatSpeed(currentSpeed)} />
+            <div style={{ display: 'flex', gap: 7, marginLeft: 'auto', paddingLeft: 10 }}>
               <button
                 onClick={() => { setPendingLatLng(userPos || { lat: 0, lng: 0 }); setShowAddPlace(true) }}
-                style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 17, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >📍</button>
               <button
                 onClick={handleStop}
-                style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #ff5252, #ef2020)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(239,32,32,0.4)' }}
+                style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg, #ff4444, #cc0000)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(204,0,0,0.4)' }}
               >■</button>
             </div>
           </div>
@@ -280,7 +381,7 @@ export default function MapPage() {
       {/* Add place modal */}
       {showAddPlace && (
         <Modal title="Save a Place" onClose={() => setShowAddPlace(false)}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
             {['restaurant', 'destination'].map(t => (
               <button key={t} onClick={() => setNewPlace(p => ({ ...p, type: t }))} style={{
                 flex: 1, padding: '11px 0', borderRadius: 12,
@@ -293,10 +394,48 @@ export default function MapPage() {
             ))}
           </div>
           <input placeholder="Place name" value={newPlace.name} onChange={e => setNewPlace(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
-          <textarea placeholder="Notes (optional)" value={newPlace.notes} onChange={e => setNewPlace(p => ({ ...p, notes: e.target.value }))} style={{ ...inputStyle, height: 80, resize: 'none' }} />
+          <textarea placeholder="Notes (optional)" value={newPlace.notes} onChange={e => setNewPlace(p => ({ ...p, notes: e.target.value }))} style={{ ...inputStyle, height: 68, resize: 'none' }} />
+
+          {/* Photo capture */}
+          {newPlace.photo ? (
+            <div style={{ position: 'relative' }}>
+              <img src={newPlace.photo} alt="Place" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 12 }} />
+              <button onClick={() => setNewPlace(p => ({ ...p, photo: null }))}
+                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 20, color: '#fff', width: 28, height: 28, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '12px 0', borderRadius: 12, border: '1.5px dashed var(--border)',
+              background: 'var(--surface-2)', color: 'var(--text-soft)', cursor: 'pointer',
+              fontSize: 14, fontWeight: 600,
+            }}>
+              <span style={{ fontSize: 18 }}>📷</span>
+              Add Photo
+              <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{ display: 'none' }} />
+            </label>
+          )}
+
           <button onClick={handleSavePlace} style={primaryBtn}>Save Place</button>
         </Modal>
       )}
+    </div>
+  )
+}
+
+function HudStat({ label, value, orange }) {
+  return (
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{label}</div>
+      <div style={{
+        fontSize: 24, fontWeight: 700, letterSpacing: -0.3, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif",
+        ...(orange ? {
+          background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        } : { color: '#fff' }),
+      }}>{value}</div>
     </div>
   )
 }
@@ -317,16 +456,10 @@ function Modal({ title, children, onClose }) {
           <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.3 }}>{title}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
       </div>
     </div>
   )
-}
-
-const iconBtn = {
-  width: 42, height: 42, borderRadius: 12, background: 'var(--surface-2)',
-  border: '1px solid var(--border)', color: 'var(--text)',
-  fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
 
 const inputStyle = {
@@ -338,7 +471,7 @@ const inputStyle = {
 const primaryBtn = {
   width: '100%', padding: '14px', borderRadius: 14,
   background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none',
-  color: 'var(--on-orange)', fontSize: 18, fontWeight: 700, cursor: 'pointer',
+  color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer',
   boxShadow: '0 6px 18px rgba(239,86,22,0.3)',
   fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
 }
