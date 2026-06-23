@@ -45,7 +45,7 @@ export default function HomePage() {
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, zIndex: 2 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 17, filter: 'drop-shadow(0 1px 6px rgba(255,140,40,0.6))' }}>🛣️</span>
-            <span style={{ fontSize: 11, letterSpacing: 3, color: 'rgba(255,255,255,0.55)', fontWeight: 800, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>Same Old Roads</span>
+            <span style={{ fontSize: 11, letterSpacing: 3, color: 'rgba(255,255,255,0.55)', fontWeight: 800, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Same Old Roads</span>
           </div>
           <button
             onClick={() => setShowProfile(p => !p)}
@@ -63,13 +63,13 @@ export default function HomePage() {
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, flex: 1 }}>
-          <div style={{ fontSize: 11, color: 'rgba(255,210,140,0.75)', fontWeight: 700, marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>
+          <div style={{ fontSize: 11, color: 'rgba(255,210,140,0.75)', fontWeight: 700, marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>
             {greetIcon} {greetText}, {firstName}
           </div>
-          <h1 style={{ margin: '0 0 10px', fontSize: 40, fontWeight: 900, color: '#fff', lineHeight: 0.96, letterSpacing: -0.5, fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase' }}>
+          <h1 style={{ margin: '0 0 10px', fontSize: 40, fontWeight: 900, color: '#fff', lineHeight: 0.96, letterSpacing: -0.5, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>
             Where Will the<br />Road Take You?
           </h1>
-          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600 }}>
+          <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", fontWeight: 600 }}>
             Track · Explore · Remember
           </p>
         </div>
@@ -125,20 +125,20 @@ export default function HomePage() {
             <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
             <div style={{
               fontSize: 30, fontWeight: 900, letterSpacing: -0.5,
-              fontFamily: "'Barlow Condensed', sans-serif",
+              fontFamily: "'Rajdhani', sans-serif",
               background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>{s.label}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Quick actions */}
       <div style={{ padding: '16px 16px 24px' }}>
-        <div style={{ fontSize: 12, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>Quick Start</div>
+        <div style={{ fontSize: 12, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
         <div style={{ display: 'flex', gap: 10 }}>
           <QuickBtn
             icon="🚗" label="Start Trip" sub="Track your route"
@@ -218,7 +218,7 @@ function Section({ title, action, onAction, children }) {
   return (
     <div style={{ marginBottom: 28 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', marginBottom: 14 }}>
-        <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text)', letterSpacing: 0.5, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>{title}</div>
+        <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--text)', letterSpacing: 0.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{title}</div>
         {action && (
           <button onClick={onAction} style={{ background: 'none', border: 'none', color: 'var(--orange-deep)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             {action} →

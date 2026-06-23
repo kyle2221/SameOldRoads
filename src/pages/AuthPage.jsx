@@ -89,11 +89,11 @@ export default function AuthPage({ onAuth }) {
 
         <div style={{ position: 'relative', textAlign: 'center', zIndex: 1, padding: '0 24px' }}>
           <div style={{ fontSize: 52, marginBottom: 16, filter: 'drop-shadow(0 2px 12px rgba(255,140,60,0.5))' }}>🛣️</div>
-          <h1 style={{ margin: '0 0 10px', fontSize: 46, fontWeight: 900, color: '#fff', letterSpacing: 0, lineHeight: 0.95, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>
+          <h1 style={{ margin: '0 0 10px', fontSize: 46, fontWeight: 900, color: '#fff', letterSpacing: 0, lineHeight: 0.95, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>
             Same Old<br />
             <span style={{ color: '#ff8a52' }}>Roads</span>
           </h1>
-          <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,220,190,0.6)', fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>
+          <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,220,190,0.6)', fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>
             Your road trips, tracked.
           </p>
         </div>
@@ -106,7 +106,7 @@ export default function AuthPage({ onAuth }) {
       <div style={{ background: '#fff', borderRadius: '28px 28px 0 0', padding: '28px 24px 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)', marginTop: -24, maxHeight: '62%', overflowY: 'auto' }}>
         <div style={{ width: 36, height: 4, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 22px' }} />
 
-        <h2 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: '#1a1208', letterSpacing: 0, fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase' }}>
+        <h2 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: '#1a1208', letterSpacing: 0, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>
           {mode === 'signin' ? 'Welcome back' : 'Create account'}
         </h2>
         <p style={{ margin: '0 0 22px', fontSize: 14, color: '#9b9ba0' }}>
