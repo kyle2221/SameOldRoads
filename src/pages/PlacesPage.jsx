@@ -128,30 +128,34 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
   }
 
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: 18, padding: '14px 16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', display: 'flex', gap: 14 }}>
-      <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{icon}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>{place.name}</div>
-          <span style={{ fontSize: 10, background: 'var(--orange-wash)', borderRadius: 6, padding: '2px 7px', color: 'var(--orange-deep)', flexShrink: 0, marginLeft: 8, fontWeight: 700 }}>
-            {place.type}
-          </span>
-        </div>
-        {place.notes ? (
-          <div style={{ fontSize: 13, color: 'var(--text-soft)', marginBottom: 10, lineHeight: 1.5 }}>{place.notes}</div>
-        ) : (
-          <div style={{ fontSize: 13, color: 'var(--text-mute)', marginBottom: 10, fontStyle: 'italic' }}>No notes yet</div>
-        )}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onEdit} style={smallBtn}>Edit</button>
-          {confirmDelete ? (
-            <>
-              <button onClick={() => onDelete()} style={{ ...smallBtn, background: 'var(--orange)', borderColor: 'var(--orange)', color: '#fff' }}>Confirm</button>
-              <button onClick={() => setConfirmDelete(false)} style={smallBtn}>Cancel</button>
-            </>
+    <div style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', display: 'flex', overflow: 'hidden' }}>
+      {/* Left accent */}
+      <div style={{ width: 4, flexShrink: 0, background: place.type === 'restaurant' ? 'linear-gradient(180deg, #ff8a52, #ef5616)' : 'linear-gradient(180deg, #7c9cf8, #4f6ef7)' }} />
+      <div style={{ flex: 1, padding: '14px 15px', display: 'flex', gap: 13 }}>
+        <div style={{ width: 46, height: 46, borderRadius: 14, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 2 }}>{place.name}</div>
+            <span style={{ fontSize: 10, background: 'var(--sunk)', borderRadius: 6, padding: '2px 8px', color: 'var(--text-soft)', flexShrink: 0, marginLeft: 8, fontWeight: 700, letterSpacing: 0.3 }}>
+              {place.type}
+            </span>
+          </div>
+          {place.notes ? (
+            <div style={{ fontSize: 13, color: 'var(--text-soft)', marginBottom: 10, lineHeight: 1.5 }}>{place.notes}</div>
           ) : (
-            <button onClick={() => setConfirmDelete(true)} style={{ ...smallBtn, color: 'var(--orange-deep)' }}>Delete</button>
+            <div style={{ fontSize: 13, color: 'var(--text-mute)', marginBottom: 10, fontStyle: 'italic' }}>No notes yet</div>
           )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onEdit} style={smallBtn}>Edit</button>
+            {confirmDelete ? (
+              <>
+                <button onClick={() => onDelete()} style={{ ...smallBtn, background: 'var(--orange)', borderColor: 'var(--orange)', color: '#fff' }}>Confirm</button>
+                <button onClick={() => setConfirmDelete(false)} style={smallBtn}>Cancel</button>
+              </>
+            ) : (
+              <button onClick={() => setConfirmDelete(true)} style={{ ...smallBtn, color: 'var(--orange-deep)' }}>Delete</button>
+            )}
+          </div>
         </div>
       </div>
     </div>

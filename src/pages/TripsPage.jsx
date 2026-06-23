@@ -36,33 +36,40 @@ export default function TripsPage() {
       )}
 
       <div style={{ padding: '16px' }}>
-        {sorted.map(trip => (
-          <div
-            key={trip.id}
-            onClick={() => setSelected(trip.id)}
-            style={{
-              background: 'var(--surface)', borderRadius: 20, marginBottom: 13,
-              border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-card)',
-            }}
-          >
-            <div style={{ height: 6, background: 'linear-gradient(90deg, #ff8a52, #ef5616)' }} />
-            <div style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🚗</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{trip.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>{formatDate(trip.createdAt)}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--orange-deep)' }}>{formatDistance(trip.distance || 0)}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>{formatDuration(trip.duration || 0)}</div>
+        {sorted.map(trip => {
+          const rCount = places.filter(p => p.tripId === trip.id && p.type === 'restaurant').length
+          const dCount = places.filter(p => p.tripId === trip.id && p.type === 'destination').length
+          return (
+            <div
+              key={trip.id}
+              onClick={() => setSelected(trip.id)}
+              style={{
+                background: 'var(--surface)', borderRadius: 20, marginBottom: 13,
+                border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-card)',
+                display: 'flex', cursor: 'pointer',
+              }}
+            >
+              {/* Left accent stripe */}
+              <div style={{ width: 5, flexShrink: 0, background: 'linear-gradient(180deg, #ff8a52, #ef5616)' }} />
+              <div style={{ flex: 1, padding: '15px 15px 13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2 }}>{formatDate(trip.createdAt)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right', marginLeft: 12, flexShrink: 0 }}>
+                    <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.5 }}>{formatDistance(trip.distance || 0)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 1 }}>{formatDuration(trip.duration || 0)}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 7 }}>
+                  <Chip label={`${rCount} restaurants`} icon="🍽️" />
+                  <Chip label={`${dCount} spots`} icon="📍" />
+                </div>
               </div>
             </div>
-            <div style={{ padding: '0 16px 13px', display: 'flex', gap: 8 }}>
-              <Chip label={`${places.filter(p => p.tripId === trip.id && p.type === 'restaurant').length} restaurants`} icon="🍽️" />
-              <Chip label={`${places.filter(p => p.tripId === trip.id && p.type === 'destination').length} spots`} icon="📍" />
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

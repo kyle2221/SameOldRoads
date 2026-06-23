@@ -169,28 +169,56 @@ export default function MapPage() {
 
   return (
     <div style={{ position: 'relative', height: '100%' }}>
+      <style>{`
+        @keyframes recPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.75)} }
+      `}</style>
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
 
       {/* Tracking HUD */}
       {trackingActive && (
         <div style={{
-          position: 'absolute', top: 16, left: 16, right: 16,
-          background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(10px)',
-          borderRadius: 18, padding: '13px 16px', border: '1px solid var(--border)',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          zIndex: 1000, boxShadow: 'var(--shadow-card)',
+          position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000,
         }}>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--text-mute)', fontWeight: 600 }}>{activeTrip?.name}</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: -0.5 }}>{formatDuration(elapsed)}</div>
+          {/* Trip name badge */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            marginBottom: 8, paddingLeft: 4,
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'block', animation: 'recPulse 1.4s ease-in-out infinite', boxShadow: '0 0 6px rgba(255,59,48,0.6)' }} />
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: 0.5, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{activeTrip?.name}</span>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--orange-deep)' }}>{formatDistance(activeTrip?.distance || 0)}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-mute)' }}>distance</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => { setPendingLatLng(userPos || { lat: 0, lng: 0 }); setShowAddPlace(true) }} style={iconBtn}>📍</button>
-            <button onClick={handleStop} style={{ ...iconBtn, background: 'var(--orange)', border: 'none', color: '#fff' }}>■</button>
+          {/* Main HUD */}
+          <div style={{
+            background: 'rgba(14,8,4,0.86)',
+            backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+            borderRadius: 22, padding: '16px 18px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            display: 'flex', alignItems: 'center', gap: 0,
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, marginBottom: 2, letterSpacing: 0.3 }}>Duration</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: -1, lineHeight: 1 }}>{formatDuration(elapsed)}</div>
+            </div>
+            <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', margin: '0 16px' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, marginBottom: 2, letterSpacing: 0.3 }}>Distance</div>
+              <div style={{
+                fontSize: 28, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+                background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              }}>{formatDistance(activeTrip?.distance || 0)}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginLeft: 8 }}>
+              <button
+                onClick={() => { setPendingLatLng(userPos || { lat: 0, lng: 0 }); setShowAddPlace(true) }}
+                style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 17, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >📍</button>
+              <button
+                onClick={handleStop}
+                style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #ff5252, #ef2020)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(239,32,32,0.4)' }}
+              >■</button>
+            </div>
           </div>
         </div>
       )}
@@ -198,20 +226,21 @@ export default function MapPage() {
       {/* Following route banner */}
       {followingRoute && (
         <div style={{
-          position: 'absolute', bottom: 80, left: 16, right: 16,
-          background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)',
-          borderRadius: 16, padding: '11px 14px', border: '1px solid var(--orange-tint)',
+          position: 'absolute', bottom: 88, left: 16, right: 16,
+          background: 'rgba(14,8,4,0.86)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+          borderRadius: 18, padding: '13px 16px',
+          border: '1px solid rgba(255,255,255,0.1)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          zIndex: 1000, boxShadow: 'var(--shadow-card)',
+          zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <span style={{ width: 30, height: 4, borderRadius: 4, background: 'var(--orange)', boxShadow: '0 0 8px var(--orange-glow)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 32, height: 4, borderRadius: 4, background: 'linear-gradient(90deg, #ff8a52, #ef5616)', boxShadow: '0 0 8px rgba(255,140,60,0.5)' }} />
             <div>
-              <div style={{ fontSize: 10, color: 'var(--orange-deep)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Following Route</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{followingRoute.name}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,180,100,0.7)', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 2 }}>Following Route</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{followingRoute.name}</div>
             </div>
           </div>
-          <button onClick={stopFollowing} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text-soft)', padding: '7px 13px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={stopFollowing} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 11, color: 'rgba(255,255,255,0.8)', padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             Stop
           </button>
         </div>
@@ -220,12 +249,17 @@ export default function MapPage() {
       {/* Start button */}
       {!trackingActive && (
         <button onClick={() => setShowNameModal(true)} style={{
-          position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-          background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none', borderRadius: 50, width: 72, height: 72,
-          fontSize: 28, cursor: 'pointer', zIndex: 1000,
-          boxShadow: '0 6px 26px rgba(239,86,22,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>🚗</button>
+          position: 'absolute', bottom: 24, left: 20, right: 20,
+          background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none',
+          borderRadius: 20, padding: '17px 0',
+          fontSize: 16, fontWeight: 900, color: '#fff', cursor: 'pointer', zIndex: 1000,
+          boxShadow: '0 8px 28px rgba(239,86,22,0.52)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          letterSpacing: 0.2,
+        }}>
+          <span style={{ fontSize: 20 }}>🚗</span>
+          Start a Trip
+        </button>
       )}
 
       {/* Name modal */}
