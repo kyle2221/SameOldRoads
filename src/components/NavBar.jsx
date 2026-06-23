@@ -50,7 +50,8 @@ export default function NavBar() {
           )}
         </button>
         <span style={{
-          fontSize: 9, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase',
+          fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase',
+          fontFamily: "'Barlow Condensed', sans-serif",
           color: activeTab === 'map' ? 'var(--orange-deep)' : 'var(--text-mute)',
         }}>
           {trackingActive ? '● Live' : 'Track'}
@@ -91,7 +92,7 @@ function NavTab({ id, label, Icon, activeTab, setTab }) {
       }}>
         <Icon size={20} active={active} />
       </div>
-      <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500, letterSpacing: 0.3 }}>
+      <span style={{ fontSize: 9, fontWeight: active ? 800 : 600, letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Barlow Condensed', sans-serif" }}>
         {label}
       </span>
     </button>

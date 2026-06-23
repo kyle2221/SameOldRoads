@@ -1,33 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  /* Base44 — clean white surfaces */
-  --bg: #ffffff;
-  --bg-soft: #fbfaf9;
+  /* Adventure surfaces */
+  --bg: #faf8f5;
+  --bg-soft: #f5f2ec;
   --surface: #ffffff;
-  --surface-2: #f7f6f4;
-  --sunk: #f1f0ed;
-  --border: #ededed;
-  --border-soft: #f4f4f4;
+  --surface-2: #f5f2ec;
+  --sunk: #ede9e2;
+  --border: #e4dfd6;
+  --border-soft: #ece8e1;
 
   /* Orange accent system */
   --orange: #ff6a2b;
-  --orange-deep: #ef5616;
+  --orange-deep: #e84d0e;
   --orange-light: #ff8a52;
-  --orange-wash: #fff1e8;
-  --orange-tint: #ffe5d4;
+  --orange-wash: #fff0e5;
+  --orange-tint: #ffdec7;
   --orange-glow: rgba(255, 106, 43, 0.22);
 
   /* Text */
-  --text: #0e0e10;
-  --text-soft: #57575c;
-  --text-mute: #9b9ba0;
+  --text: #1a1208;
+  --text-soft: #52483c;
+  --text-mute: #9a907f;
   --on-orange: #ffffff;
 
-  --shadow-card: 0 4px 22px rgba(20, 20, 30, 0.06);
-  --shadow-soft: 0 2px 10px rgba(20, 20, 30, 0.05);
-  --shadow-pop: 0 14px 44px rgba(20, 20, 30, 0.16);
-  --shadow-nav: 0 -2px 20px rgba(30, 20, 10, 0.07);
+  --shadow-card: 0 4px 22px rgba(30, 18, 6, 0.09);
+  --shadow-soft: 0 2px 10px rgba(30, 18, 6, 0.07);
+  --shadow-pop: 0 14px 44px rgba(20, 12, 4, 0.2);
+  --shadow-nav: 0 -2px 20px rgba(30, 20, 10, 0.09);
 }
 
 * {
@@ -41,7 +41,7 @@ html, body, #root {
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Barlow', 'Barlow Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overscroll-behavior: none;
   margin: 0;
   padding: 0;
