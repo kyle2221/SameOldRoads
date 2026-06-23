@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { api, ApiError } from '../services/api'
+import { api, ApiError, photoUrl } from '../services/api'
 import { useStore } from '../store'
 import { formatRating } from '../utils/format'
+import { useDebounced } from '../hooks/useDebounced'
 import ReviewsPanel from '../components/ReviewsPanel'
+import { toast } from '../store/toast'
 
 export default function DiscoverPage() {
   const [q, setQ] = useState('')
@@ -16,21 +18,50 @@ export default function DiscoverPage() {
   const inputRef = useRef(null)
   const { addPlace } = useStore()
 
+  // Autocomplete state
+  const debouncedInput = useDebounced(q, 280)
+  const [suggestions, setSuggestions] = useState([])
+  const [showSug, setShowSug] = useState(false)
+  const [sugLoading, setSugLoading] = useState(false)
+  const sugCtrlRef = useRef(null)
+
   // Try to capture the user's location for "search nearby" toggle
   useEffect(() => {
     if (!useNearby) return
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => { setUseNearby(false); alert('Could not get your location. Continuing without nearby bias.') },
+      () => { setUseNearby(false); toast.warn('Could not get your location. Continuing without nearby bias.') },
       { enableHighAccuracy: true, maximumAge: 30000, timeout: 8000 }
     )
   }, [useNearby])
 
-  async function runSearch(e) {
+  // Autocomplete fetch — fires when the debounced input changes (min 2 chars).
+  useEffect(() => {
+    if (sugCtrlRef.current) { sugCtrlRef.current.abort(); sugCtrlRef.current = null }
+    const input = debouncedInput.trim()
+    if (input.length < 2) { setSuggestions([]); return }
+    const ctrl = new AbortController()
+    sugCtrlRef.current = ctrl
+    setSugLoading(true)
+    api.autocomplete({
+      input,
+      lat: useNearby ? userPos?.lat : undefined,
+      lng: useNearby ? userPos?.lng : undefined,
+      signal: ctrl.signal,
+    })
+      .then((data) => { if (!ctrl.signal.aborted) setSuggestions(data.suggestions || []) })
+      .catch((e) => { if (e?.message !== 'Request cancelled') setSuggestions([]) })
+      .finally(() => { if (!ctrl.signal.aborted) setSugLoading(false) })
+    return () => ctrl.abort()
+  }, [debouncedInput, useNearby, userPos])
+
+  async function runSearch(e, queryOverride) {
     e?.preventDefault?.()
-    const query = q.trim()
+    const query = (queryOverride ?? q).trim()
     if (!query) { inputRef.current?.focus(); return }
+    setQ(query)
+    setShowSug(false)
     setLoading(true); setError(null); setSelected(null); setSubmitted(query)
     try {
       const data = await api.searchPlaces({
@@ -62,17 +93,48 @@ export default function DiscoverPage() {
       </div>
 
       <form onSubmit={runSearch} style={{ padding: '0 16px 12px' }}>
-        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Best tacos near Big Sur…"
-            style={{ flex: 1, padding: '14px 16px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, outline: 'none' }}
-          />
-          <button type="submit" disabled={loading} style={{ padding: '0 18px', borderRadius: 14, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(239,86,22,0.35)' }}>
-            {loading ? '…' : 'Search'}
-          </button>
+        <div style={{ position: 'relative', marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <input
+                ref={inputRef}
+                value={q}
+                onChange={(e) => { setQ(e.target.value); setShowSug(true) }}
+                onFocus={() => setShowSug(true)}
+                onBlur={() => setTimeout(() => setShowSug(false), 180)}
+                placeholder="Best tacos near Big Sur…"
+                autoComplete="off"
+                style={{ width: '100%', padding: '14px 16px 14px 42px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, outline: 'none' }}
+              />
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.5 }}>🔍</span>
+              {sugLoading && (
+                <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, border: '2px solid var(--orange-tint)', borderTopColor: 'var(--orange)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              )}
+            </div>
+            <button type="submit" disabled={loading} style={{ padding: '0 18px', borderRadius: 14, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(239,86,22,0.35)' }}>
+              {loading ? '…' : 'Search'}
+            </button>
+          </div>
+
+          {/* Autocomplete dropdown */}
+          {showSug && suggestions.length > 0 && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: 'var(--shadow-pop)', maxHeight: 320, overflowY: 'auto', zIndex: 100 }}>
+              {suggestions.map((s, i) => (
+                <button
+                  key={s.placeId || i}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { setShowSug(false); runSearch(undefined, s.text) }}
+                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', borderBottom: i === suggestions.length - 1 ? 'none' : '1px solid var(--border-soft)', cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center' }}
+                >
+                  <span style={{ fontSize: 14, opacity: 0.5 }}>📍</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.mainText}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-mute)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.secondaryText}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 12, color: 'var(--text-soft)', cursor: 'pointer', userSelect: 'none' }}>
           <input type="checkbox" checked={useNearby} onChange={(e) => setUseNearby(e.target.checked)} style={{ accentColor: 'var(--orange)' }} />
@@ -87,7 +149,7 @@ export default function DiscoverPage() {
         {!loading && error && <ErrorCard error={error} />}
 
         {!loading && !error && !results && (
-          <Suggestions onPick={(s) => { setQ(s); setTimeout(runSearch, 0) }} />
+          <Suggestions onPick={(s) => { setQ(s); setTimeout(() => runSearch(undefined, s), 0) }} />
         )}
 
         {!loading && !error && results && results.count === 0 && (
@@ -116,10 +178,15 @@ export default function DiscoverPage() {
 }
 
 function PlaceResultCard({ place, onTap }) {
+  const photo = place.photoRef ? photoUrl(place.photoRef, { maxWidthPx: 200, maxHeightPx: 200 }) : null
   return (
-    <button onClick={onTap} style={{ width: '100%', textAlign: 'left', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', padding: 14, display: 'flex', gap: 13, cursor: 'pointer', alignItems: 'flex-start' }}>
-      <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📍</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+    <button onClick={onTap} style={{ width: '100%', textAlign: 'left', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', padding: 0, display: 'flex', gap: 0, cursor: 'pointer', alignItems: 'stretch', overflow: 'hidden' }}>
+      {photo ? (
+        <img src={photo} alt="" loading="lazy" style={{ width: 78, height: 'auto', flexShrink: 0, objectFit: 'cover', background: 'var(--surface-2)' }} />
+      ) : (
+        <div style={{ width: 78, flexShrink: 0, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>📍</div>
+      )}
+      <div style={{ flex: 1, minWidth: 0, padding: 14 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{place.name}</div>
           {place.rating != null && (
@@ -172,9 +239,11 @@ function PlaceDetail({ place, onBack, onAddPlace }) {
     }
     await onAddPlace(newPlace)
     setAdding(false); setAdded(true)
+    toast.success('Saved to your places')
   }
 
   const title = place.name
+
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
       <div style={{ padding: '70px 20px 22px', background: 'linear-gradient(165deg, #120600 0%, #c84a10 70%, #ef5616 100%)', position: 'relative', overflow: 'hidden' }}>
@@ -191,6 +260,18 @@ function PlaceDetail({ place, onBack, onAddPlace }) {
           )}
         </div>
       </div>
+
+      {/* Hero photo gallery (if available) */}
+      {details && details.photos?.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, padding: '14px 16px 0', overflowX: 'auto' }}>
+          {details.photos.slice(0, 6).map((ph, i) => (
+            <img key={i} src={photoUrl(ph.ref, { maxWidthPx: 400, maxHeightPx: 300 })} alt=""
+              loading="lazy"
+              style={{ width: 180, height: 130, borderRadius: 14, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }}
+            />
+          ))}
+        </div>
+      )}
 
       <div style={{ padding: '20px 16px' }}>
         {/* Add-to-places block */}
@@ -213,15 +294,30 @@ function PlaceDetail({ place, onBack, onAddPlace }) {
         {detailsErr && <div style={{ fontSize: 12, color: 'var(--text-mute)', padding: 12, textAlign: 'center' }}>Couldn't load full details: {detailsErr.message}</div>}
         {details && !loadingDetails && (
           <div style={{ marginBottom: 22 }}>
+            {/* Open now badge */}
+            {details.openNow != null && (
+              <div style={{ marginBottom: 12, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, background: details.openNow ? '#f0fdf4' : '#fef2f2', border: `1px solid ${details.openNow ? '#bbf7d0' : '#fecaca'}`, fontSize: 12, fontWeight: 700, color: details.openNow ? '#15803d' : '#b91c1c' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: details.openNow ? '#22c55e' : '#ef4444' }} />
+                {details.openNow ? 'Open now' : 'Closed now'}
+                {details.todayHours && <span style={{ color: 'var(--text-mute)', fontWeight: 500, marginLeft: 4 }}>· {details.todayHours}</span>}
+              </div>
+            )}
             {details.editorialSummary && (
               <div style={{ fontSize: 13, color: 'var(--text-soft)', lineHeight: 1.6, marginBottom: 14, fontStyle: 'italic' }}>{details.editorialSummary}</div>
             )}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {details.phone && <DetailCell icon="📞" label="Phone" value={details.phone} />}
+              {details.phone && <DetailCell icon="📞" label="Phone" value={details.phone} href={`tel:${details.phone.replace(/[^+\d]/g, '')}`} />}
               {details.website && <DetailCell icon="🔗" label="Website" value={details.website.replace(/^https?:\/\//, '').replace(/\/$/, '')} href={details.website} />}
               {details.openingHours && details.openingHours.length > 0 && <DetailCell icon="🕒" label="Hours today" value={details.openingHours[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]} />}
               {details.priceLevel != null && <DetailCell icon="💰" label="Price" value={'$'.repeat(details.priceLevel) || '—'} />}
             </div>
+
+            {/* Google Maps deep link */}
+            {place.mapsUri && (
+              <a href={place.mapsUri} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12, padding: '11px', borderRadius: 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>
+                <span>🗺️</span> Open in Google Maps
+              </a>
+            )}
           </div>
         )}
 
@@ -268,9 +364,9 @@ function LoadingSkeleton() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 8 }}>
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', padding: 14, display: 'flex', gap: 13 }}>
-          <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--surface-2)' }} />
-          <div style={{ flex: 1 }}>
+        <div key={i} style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', padding: 0, display: 'flex', overflow: 'hidden' }}>
+          <div style={{ width: 78, background: 'var(--surface-2)' }} />
+          <div style={{ flex: 1, padding: 14 }}>
             <div style={{ height: 14, width: '60%', background: 'var(--surface-2)', borderRadius: 4, marginBottom: 8 }} />
             <div style={{ height: 10, width: '90%', background: 'var(--surface-2)', borderRadius: 4 }} />
           </div>

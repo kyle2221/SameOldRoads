@@ -1,5 +1,5 @@
 import { config } from '../config.js'
-import { fetchJSON, UpstreamError } from '../utils/http.js'
+import { fetchJSON, fetchBuffer, UpstreamError, withRetry } from '../utils/http.js'
 import { caches } from '../utils/cache.js'
 import { logger } from '../utils/logger.js'
 
@@ -19,6 +19,15 @@ const DETAILS_FIELDS = [
   'userRatingCount', 'googleMapsUri', 'websiteUri', 'internationalPhoneNumber',
   'photos.name', 'photos.widthPx', 'photos.heightPx', 'primaryTypeDisplayName',
   'currentOpeningHours', 'businessStatus', 'editorialSummary', 'priceLevel',
+  'regularOpeningHours',
+].join(',')
+
+const AUTOCOMPLETE_FIELDS = [
+  'suggestions.placePrediction.placeId',
+  'suggestions.placePrediction.text',
+  'suggestions.placePrediction.structuredFormat.mainText',
+  'suggestions.placePrediction.structuredFormat.secondaryText',
+  'suggestions.placePrediction.types',
 ].join(',')
 
 function ensureKey() {
@@ -46,12 +55,23 @@ function shapePlace(p) {
 
 function shapeDetails(p) {
   const base = shapePlace(p) || {}
+  const cur = p.currentOpeningHours || {}
+  const reg = p.regularOpeningHours || {}
+  // Build a friendly "open now?" + today's hours summary
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+  const todayHours = cur.weekdayDescriptions?.[todayIdx]
+    || reg.weekdayDescriptions?.[todayIdx]
+    || null
+  const openNow = typeof cur.openNow === 'boolean' ? cur.openNow
+    : typeof reg.openNow === 'boolean' ? reg.openNow : null
   return {
     ...base,
     website: p.websiteUri || null,
     phone: p.internationalPhoneNumber || null,
     priceLevel: p.priceLevel ?? null,
-    openingHours: p.currentOpeningHours?.weekdayDescriptions || null,
+    openingHours: cur.weekdayDescriptions || reg.weekdayDescriptions || null,
+    openNow,
+    todayHours,
     editorialSummary: p.editorialSummary?.text || null,
     photos: (p.photos || []).map((ph) => ({ ref: ph.name, width: ph.widthPx, height: ph.heightPx })),
   }
@@ -81,22 +101,80 @@ export async function searchPlaces({ q, lat, lng, radius = 25000, pageSize = 10 
     body.locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: Math.max(1, Math.min(50000, Number(radius) || 25000)) } }
   }
 
-  const data = await fetchJSON(PLACES_BASE + ':searchText', {
-    method: 'POST',
-    timeoutMs: 7000,
-    label: 'google-maps-search',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': config.googleMapsApiKey,
-      'X-Goog-FieldMask': SEARCH_FIELDS,
-    },
-    body,
-  })
+  const data = await withRetry(
+    () => fetchJSON(PLACES_BASE + ':searchText', {
+      method: 'POST',
+      timeoutMs: 7000,
+      label: 'google-maps-search',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': config.googleMapsApiKey,
+        'X-Goog-FieldMask': SEARCH_FIELDS,
+      },
+      body,
+    }),
+    { retries: 1 }
+  )
 
   const places = (data?.places || []).map(shapePlace).filter(Boolean)
   const result = { places, count: places.length, query: q.trim() }
   caches.placeSearch.set(cacheKey, result, config.cache.placeSearch)
   logger.info('google-maps search ok', { q: q.trim(), count: places.length })
+  return result
+}
+
+// Autocomplete — type-ahead suggestions for the Discover search box.
+// Uses the v1 :autocompleteText endpoint. Returns lightweight predictions.
+export async function autocompletePlaces({ input, lat, lng, radius = 50000 }) {
+  ensureKey()
+  if (!input || !input.trim()) {
+    return { suggestions: [] }
+  }
+  if (input.trim().length < 2) {
+    return { suggestions: [] }
+  }
+
+  const cacheKey = JSON.stringify({ input: input.trim().toLowerCase(), lat, lng, radius })
+  const cached = caches.placeSearch.get('ac:' + cacheKey)
+  if (cached) { logger.debug('google-maps autocomplete cache hit', { input }); return cached }
+
+  const body = {
+    text: input.trim(),
+    languageCode: 'en',
+  }
+  if (typeof lat === 'number' && typeof lng === 'number') {
+    body.locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: Math.max(1, Math.min(50000, Number(radius) || 50000)) } }
+  }
+
+  const data = await fetchJSON(PLACES_BASE + ':autocompleteText', {
+    method: 'POST',
+    timeoutMs: 4000,
+    label: 'google-maps-autocomplete',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': config.googleMapsApiKey,
+      'X-Goog-FieldMask': AUTOCOMPLETE_FIELDS,
+    },
+    body,
+  })
+
+  const suggestions = (data?.suggestions || [])
+    .map((s) => {
+      const p = s.placePrediction
+      if (!p) return null
+      return {
+        placeId: p.placeId,
+        text: p.text?.text || '',
+        mainText: p.structuredFormat?.mainText?.text || '',
+        secondaryText: p.structuredFormat?.secondaryText?.text || '',
+        types: p.types || [],
+      }
+    })
+    .filter(Boolean)
+
+  const result = { suggestions }
+  caches.placeSearch.set('ac:' + cacheKey, result, 1000 * 60 * 10) // 10 min for autocomplete
+  logger.info('google-maps autocomplete ok', { input: input.trim(), count: suggestions.length })
   return result
 }
 
@@ -108,18 +186,50 @@ export async function getPlaceDetails(placeId) {
   const cached = caches.placeDetails.get(placeId)
   if (cached) { logger.debug('google-maps details cache hit', { placeId }); return cached }
 
-  const data = await fetchJSON(`${PLACES_BASE}/${placeId}`, {
-    timeoutMs: 7000,
-    label: 'google-maps-details',
-    headers: {
-      'X-Goog-Api-Key': config.googleMapsApiKey,
-      'X-Goog-FieldMask': DETAILS_FIELDS,
-    },
-  })
+  const data = await withRetry(
+    () => fetchJSON(`${PLACES_BASE}/${placeId}`, {
+      timeoutMs: 7000,
+      label: 'google-maps-details',
+      headers: {
+        'X-Goog-Api-Key': config.googleMapsApiKey,
+        'X-Goog-FieldMask': DETAILS_FIELDS,
+      },
+    }),
+    { retries: 1 }
+  )
 
   const result = shapeDetails(data)
   caches.placeDetails.set(placeId, result, config.cache.placeDetails)
   logger.info('google-maps details ok', { placeId, name: result.name })
+  return result
+}
+
+// Fetch a place photo as binary, with server-side caching of the bytes.
+// Returns { buffer, contentType } so the route handler can stream it.
+// photoRef is the `places/{id}/photos/{n}` resource name from a Places response.
+export async function getPlacePhoto(photoRef, { maxWidthPx = 480, maxHeightPx = 360 } = {}) {
+  ensureKey()
+  if (!photoRef) throw new UpstreamError('photoRef is required', { status: 400, upstream: 'google-maps', code: 'BAD_REQUEST' })
+  maxWidthPx = Math.max(1, Math.min(4800, Number(maxWidthPx) || 480))
+  maxHeightPx = Math.max(1, Math.min(4800, Number(maxHeightPx) || 360))
+
+  const cacheKey = `photo:${photoRef}:${maxWidthPx}x${maxHeightPx}`
+  const cached = caches.placeDetails.get(cacheKey)
+  if (cached) { logger.debug('google-maps photo cache hit', { photoRef }); return cached }
+
+  const url = new URL(`https://places.googleapis.com/v1/${photoRef.startsWith('places/') ? photoRef : 'places/' + photoRef}/media`)
+  url.searchParams.set('maxWidthPx', String(maxWidthPx))
+  url.searchParams.set('maxHeightPx', String(maxHeightPx))
+  url.searchParams.set('key', config.googleMapsApiKey)
+
+  const { buffer, contentType } = await fetchBuffer(url.toString(), {
+    timeoutMs: 6000,
+    label: 'google-maps-photo',
+  })
+
+  const result = { buffer, contentType: contentType || 'image/jpeg' }
+  // Photos rarely change — cache for 24h
+  caches.placeDetails.set(cacheKey, result, 1000 * 60 * 60 * 24)
   return result
 }
 

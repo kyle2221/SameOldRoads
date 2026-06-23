@@ -109,15 +109,34 @@ export async function getReviews({ query, placeId, lat, lng, limit = 10 }) {
     photos: (r.images || []).map((img) => img.original || img.thumbnail).filter(Boolean),
   }))
 
+  // Aggregate rating distribution (1★..5★) for the UI sparkline.
+  // We use the wider pool we fetched (not just `trimmed`) for a more
+  // representative distribution when more reviews are available.
+  const distribution = [0, 0, 0, 0, 0] // index 0 = 1★, 4 = 5★
+  let sumRatings = 0
+  let ratedCount = 0
+  for (const r of collected) {
+    const rt = typeof r.rating === 'number' ? r.rating : Number(r.rating)
+    if (Number.isFinite(rt) && rt >= 1 && rt <= 5) {
+      const bucket = Math.min(4, Math.max(0, Math.round(rt) - 1))
+      distribution[bucket]++
+      sumRatings += rt
+      ratedCount++
+    }
+  }
+
   const result = {
     place: placeInfo,
     reviews: trimmed,
     count: trimmed.length,
+    totalCount: collected.length,
+    distribution,
+    averageRating: ratedCount > 0 ? Math.round((sumRatings / ratedCount) * 10) / 10 : null,
     query: query || null,
     placeId: dataId,
   }
 
   caches.reviews.set(cacheKey, result, config.cache.reviews)
-  logger.info('serpapi reviews ok', { query, placeId: dataId, count: trimmed.length })
+  logger.info('serpapi reviews ok', { query, placeId: dataId, count: trimmed.length, rated: ratedCount })
   return result
 }

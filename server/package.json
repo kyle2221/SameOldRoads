@@ -1,12 +1,13 @@
 {
   "name": "sameoldroads-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Backend API for SameOldRoads — proxies Google Maps Places API and SerpApi (Google Reviews) with rate limiting, caching, and security headers.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "lint": "eslint src"
   },
   "engines": {
     "node": ">=18"

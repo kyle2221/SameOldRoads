@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useStore } from '../store'
-import { formatDistance, formatDuration } from '../utils/format'
+import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
 
 // Pure-SVG charts — no chart library. Mobile-first, fits the existing design system.
 export default function StatsPage() {
@@ -32,7 +32,33 @@ export default function StatsPage() {
               <BigStat icon="📍" value={String(stats.totalPlaces)} label="Places saved" />
               <BigStat icon="🍽️" value={String(stats.restaurants)} label="Restaurants" />
               <BigStat icon="⭐" value={String(stats.destinations)} label="Destinations" />
+              <BigStat icon="⚡" value={formatSpeed(stats.avgSpeed)} label="Avg speed" />
+              <BigStat icon="📏" value={formatDistance(stats.longestTrip)} label="Longest trip" />
             </div>
+
+            {/* YoY delta */}
+            {stats.yoyDelta != null && (
+              <Card title="Year over year" subtitle="This year vs last year, total distance">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>This year</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)', marginTop: 2 }}>{formatDistance(stats.thisYearDistance)}</div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Last year</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-soft)', marginTop: 2 }}>{formatDistance(stats.lastYearDistance)}</div>
+                  </div>
+                  <div style={{
+                    padding: '8px 12px', borderRadius: 12,
+                    background: stats.yoyDelta > 0 ? '#f0fdf4' : stats.yoyDelta < 0 ? '#fef2f2' : 'var(--surface-2)',
+                    color: stats.yoyDelta > 0 ? '#15803d' : stats.yoyDelta < 0 ? '#b91c1c' : 'var(--text-soft)',
+                    fontSize: 14, fontWeight: 800, whiteSpace: 'nowrap',
+                  }}>
+                    {stats.yoyDelta > 0 ? '↑' : stats.yoyDelta < 0 ? '↓' : '–'} {Math.abs(stats.yoyDelta)}%
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Distance over time chart */}
             <Card title="Distance over time" subtitle={`Last ${Math.min(stats.last6.length, 6)} months`}>
@@ -85,12 +111,28 @@ function computeStats(trips, places) {
   const totalDuration = trips.reduce((s, t) => s + (t.duration || 0), 0)
   const restaurants = places.filter((p) => p.type === 'restaurant').length
   const destinations = places.filter((p) => p.type === 'destination').length
+  const avgSpeed = totalDuration > 0 ? totalDistance / (totalDuration / 1000) : 0 // m/s
+  const longestTrip = trips.reduce((m, t) => Math.max(m, t.distance || 0), 0)
+
+  // YoY
+  const now = new Date()
+  const thisYear = now.getFullYear()
+  const thisYearDistance = trips
+    .filter((t) => new Date(t.createdAt || 0).getFullYear() === thisYear)
+    .reduce((s, t) => s + (t.distance || 0), 0)
+  const lastYearDistance = trips
+    .filter((t) => new Date(t.createdAt || 0).getFullYear() === thisYear - 1)
+    .reduce((s, t) => s + (t.distance || 0), 0)
+  // Only show YoY if there's data for either year
+  const hasYoy = thisYearDistance > 0 || lastYearDistance > 0
+  const yoyDelta = hasYoy && lastYearDistance > 0
+    ? Math.round(((thisYearDistance - lastYearDistance) / lastYearDistance) * 100)
+    : hasYoy && thisYearDistance > 0 ? 100 : null
 
   // Last 6 months distance
-  const now = new Date()
   const months = []
   for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const d = new Date(thisYear, now.getMonth() - i, 1)
     months.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleString('en-US', { month: 'short' }), distance: 0 })
   }
   for (const t of trips) {
@@ -120,7 +162,9 @@ function computeStats(trips, places) {
 
   return {
     totalDistance, totalDuration, totalTrips: trips.length, totalPlaces: places.length,
-    restaurants, destinations, last6: months, buckets, topTrips,
+    restaurants, destinations, avgSpeed, longestTrip,
+    thisYearDistance, lastYearDistance, yoyDelta,
+    last6: months, buckets, topTrips,
   }
 }
 

@@ -8,6 +8,7 @@ import { config } from './config.js'
 import { logger } from './utils/logger.js'
 import { globalLimiter, upstreamLimiter } from './middleware/rateLimit.js'
 import { errorHandler, notFound } from './middleware/errorHandler.js'
+import { requestId, accessLog } from './middleware/requestId.js'
 import healthRouter from './routes/health.js'
 import placesRouter from './routes/places.js'
 import reviewsRouter from './routes/reviews.js'
@@ -23,6 +24,10 @@ app.use(compression())
 app.use(express.json({ limit: '256kb' }))
 app.use(express.urlencoded({ extended: false, limit: '256kb' }))
 
+// Request id + access logging — runs before everything else so every log line is correlatable
+app.use(requestId)
+app.use(accessLog)
+
 // CORS — only allow origins from env
 app.use(cors({
   origin(origin, cb) {
@@ -33,7 +38,8 @@ app.use(cors({
     return cb(new Error(`CORS blocked for origin ${origin}`))
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  exposedHeaders: ['X-Request-Id'],
   maxAge: 600,
 }))
 
@@ -46,18 +52,23 @@ app.use(morgan(config.isProd ? 'combined' : 'dev', {
 app.use(globalLimiter)
 
 // --- Routes ---
-app.get('/', (_req, res) => res.json({
-  name: 'SameOldRoads API',
-  docs: '/api/health',
-  endpoints: [
-    'GET /api/places/search?q=&lat=&lng=&radius=&pageSize=',
-    'GET /api/places/details?placeId=',
-    'GET /api/places/reverse-geocode?lat=&lng=',
-    'GET /api/reviews?query=&placeId=&lat=&lng=&limit=',
-    'GET /api/health',
-    'GET /api/health/stats',
-  ],
-}))
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'SameOldRoads API',
+    version: '1.1.0',
+    docs: '/api/health',
+    endpoints: [
+      'GET /api/places/autocomplete?input=&lat=&lng=&radius=',
+      'GET /api/places/search?q=&lat=&lng=&radius=&pageSize=',
+      'GET /api/places/details?placeId=',
+      'GET /api/places/photo?photoRef=&maxWidthPx=&maxHeightPx=',
+      'GET /api/places/reverse-geocode?lat=&lng=',
+      'GET /api/reviews?query=&placeId=&lat=&lng=&limit=',
+      'GET /api/health',
+      'GET /api/health/stats',
+    ],
+  })
+})
 
 app.use('/api/health', healthRouter)
 // Stricter limiter on the upstream-proxying routes

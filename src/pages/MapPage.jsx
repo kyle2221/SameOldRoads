@@ -1,25 +1,38 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
-import { formatDistance, formatDuration } from '../utils/format'
+import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
 import { routeAlongRoads } from '../utils/routing'
+import { toast } from '../store/toast'
+
+function haversine(a, b) {
+  const R = 6371e3, p1 = a.lat * Math.PI / 180, p2 = b.lat * Math.PI / 180
+  const dp = (b.lat - a.lat) * Math.PI / 180, dl = (b.lng - a.lng) * Math.PI / 180
+  const x = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+}
 
 export default function MapPage() {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const pathLayerRef = useRef(null)
   const routeLayerRef = useRef(null)
+  const userMarkerRef = useRef(null)
   const markersRef = useRef([])
   const watchIdRef = useRef(null)
   const roRef = useRef(null)
+  const lastPosRef = useRef(null)
+  const lastSpeedTsRef = useRef(null)
 
   const { trackingActive, currentPath, activeTrip, startTrip, appendPathPoint, stopTrip, places, followingRoute, stopFollowing, addPlace } = useStore()
   const [elapsed, setElapsed] = useState(0)
+  const [speed, setSpeed] = useState(0)
   const [showNameModal, setShowNameModal] = useState(false)
   const [tripName, setTripName] = useState('')
   const [showAddPlace, setShowAddPlace] = useState(false)
   const [newPlace, setNewPlace] = useState({ type: 'restaurant', name: '', notes: '' })
   const [pendingLatLng, setPendingLatLng] = useState(null)
   const [userPos, setUserPos] = useState(null)
+  const [distToNextStop, setDistToNextStop] = useState(null)
 
   useEffect(() => {
     if (mapInstanceRef.current) return
@@ -91,21 +104,69 @@ export default function MapPage() {
   }, [places])
 
   useEffect(() => {
-    if (!trackingActive || !activeTrip) { setElapsed(0); return }
+    if (!trackingActive || !activeTrip) { setElapsed(0); setSpeed(0); return }
     const id = setInterval(() => setElapsed(Date.now() - activeTrip.startTime), 1000)
     return () => clearInterval(id)
   }, [trackingActive, activeTrip])
 
+  // Decay speed display to 0 if no GPS updates for 3s
+  useEffect(() => {
+    if (!trackingActive) return
+    const id = setInterval(() => {
+      if (lastSpeedTsRef.current && Date.now() - lastSpeedTsRef.current > 3000) setSpeed(0)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [trackingActive])
+
+  // Compute distance to next stop when following a route + have user pos
+  useEffect(() => {
+    if (!followingRoute?.places?.length || !userPos) { setDistToNextStop(null); return }
+    let min = Infinity
+    for (const p of followingRoute.places) {
+      const d = haversine(userPos, { lat: p.lat, lng: p.lng })
+      if (d < min) min = d
+    }
+    setDistToNextStop(min === Infinity ? null : min)
+  }, [userPos, followingRoute])
+
   function startGPS() {
-    if (!navigator.geolocation) return alert('Geolocation not available')
+    if (!navigator.geolocation) { toast.error('Geolocation not available'); return }
     watchIdRef.current = navigator.geolocation.watchPosition(
       pos => {
         const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        setUserPos(latlng); appendPathPoint(latlng)
+        setUserPos(latlng)
+        // Update speed from GPS (more accurate than computing from path deltas)
+        if (pos.coords.speed != null && pos.coords.speed >= 0) {
+          setSpeed(pos.coords.speed)
+        } else if (lastPosRef.current) {
+          const dt = (Date.now() - lastSpeedTsRef.current) / 1000
+          if (dt > 0.5) {
+            const d = haversine(lastPosRef.current, latlng)
+            setSpeed(d / dt)
+          }
+        }
+        lastPosRef.current = latlng
+        lastSpeedTsRef.current = Date.now()
+        appendPathPoint(latlng)
+        // Pan map to user position
         mapInstanceRef.current?.setView([latlng.lat, latlng.lng], 15)
+        // Update user position marker
+        import('leaflet').then(L => {
+          if (!mapInstanceRef.current) return
+          if (userMarkerRef.current) { userMarkerRef.current.setLatLng([latlng.lat, latlng.lng]) }
+          else {
+            userMarkerRef.current = L.default.marker([latlng.lat, latlng.lng], {
+              icon: L.default.divIcon({
+                html: `<div style="width:18px;height:18px;border-radius:50%;background:#ff6a2b;border:3px solid #fff;box-shadow:0 0 12px rgba(255,106,43,0.7);animation:userPulse 1.6s ease-in-out infinite"></div>`,
+                iconSize: [18, 18], className: '',
+              }),
+              zIndexOffset: 1000,
+            }).addTo(mapInstanceRef.current)
+          }
+        })
       },
-      err => console.warn(err),
-      { enableHighAccuracy: true, maximumAge: 2000 }
+      err => { console.warn(err); toast.warn('GPS signal lost — check your location permissions') },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 12000 }
     )
   }
 
@@ -113,22 +174,41 @@ export default function MapPage() {
     if (!tripName.trim()) return
     await startTrip(tripName.trim())
     setShowNameModal(false); setTripName(''); startGPS()
+    if (navigator.vibrate) navigator.vibrate(15)
+    toast.success(`Tracking "${tripName.trim()}"`)
   }
 
   async function handleStop() {
     if (watchIdRef.current) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null }
-    await stopTrip(); setElapsed(0)
+    await stopTrip(); setElapsed(0); setSpeed(0)
+    if (userMarkerRef.current) { userMarkerRef.current.remove(); userMarkerRef.current = null }
+    if (navigator.vibrate) navigator.vibrate([10, 40, 10])
+    toast.success('Trip saved')
+  }
+
+  function handleRecenter() {
+    if (userPos && mapInstanceRef.current) {
+      mapInstanceRef.current.setView([userPos.lat, userPos.lng], 15)
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const ll = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setUserPos(ll)
+        mapInstanceRef.current?.setView([ll.lat, ll.lng], 15)
+      }, () => toast.warn('Could not get your location'), { enableHighAccuracy: true, timeout: 8000 })
+    }
   }
 
   async function handleSavePlace() {
     if (!newPlace.name.trim() || !pendingLatLng) return
     await addPlace({ id: crypto.randomUUID(), ...newPlace, lat: pendingLatLng.lat, lng: pendingLatLng.lng, tripId: activeTrip?.id || null, createdAt: Date.now() })
     setShowAddPlace(false); setNewPlace({ type: 'restaurant', name: '', notes: '' })
+    if (navigator.vibrate) navigator.vibrate(15)
+    toast.success('Place saved')
   }
 
   return (
     <div style={{ position: 'relative', height: '100%' }}>
-      <style>{`@keyframes recPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.75)} }`}</style>
+      <style>{`@keyframes recPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.75)} } @keyframes userPulse { 0%,100%{box-shadow:0 0 12px rgba(255,106,43,0.7)} 50%{box-shadow:0 0 24px rgba(255,106,43,0.9)} }`}</style>
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
 
       {trackingActive && (
@@ -147,6 +227,11 @@ export default function MapPage() {
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, marginBottom: 2 }}>Distance</div>
               <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -1, lineHeight: 1, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{formatDistance(activeTrip?.distance || 0)}</div>
             </div>
+            <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', margin: '0 16px' }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, marginBottom: 2 }}>Speed</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: -1, lineHeight: 1 }}>{formatSpeed(speed)}</div>
+            </div>
             <div style={{ display: 'flex', gap: 8, marginLeft: 8 }}>
               <button onClick={() => { setPendingLatLng(userPos || { lat: 0, lng: 0 }); setShowAddPlace(true) }} style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 17, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📍</button>
               <button onClick={handleStop} style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #ff5252, #ef2020)', border: 'none', color: '#fff', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(239,32,32,0.4)' }}>■</button>
@@ -155,6 +240,17 @@ export default function MapPage() {
         </div>
       )}
 
+      {/* Recenter button */}
+      <button onClick={handleRecenter} aria-label="Recenter" style={{
+        position: 'absolute', right: 16, bottom: trackingActive ? 96 : 88, zIndex: 1000,
+        width: 44, height: 44, borderRadius: 14,
+        background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)',
+        boxShadow: 'var(--shadow-pop)', cursor: 'pointer', fontSize: 18,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        🎯
+      </button>
+
       {followingRoute && (
         <div style={{ position: 'absolute', bottom: 88, left: 16, right: 16, background: 'rgba(14,8,4,0.86)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderRadius: 18, padding: '13px 16px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -162,6 +258,9 @@ export default function MapPage() {
             <div>
               <div style={{ fontSize: 10, color: 'rgba(255,180,100,0.7)', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 2 }}>Following Route</div>
               <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{followingRoute.name}</div>
+              {distToNextStop != null && (
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>📍 {formatDistance(distToNextStop)} to next stop</div>
+              )}
             </div>
           </div>
           <button onClick={stopFollowing} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 11, color: 'rgba(255,255,255,0.8)', padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Stop</button>

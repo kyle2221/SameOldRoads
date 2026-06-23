@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate } from '../utils/format'
 import NodeBackground from '../components/NodeBackground'
@@ -12,8 +12,40 @@ function getTimeGreeting() {
   return ['Late-night run?', '🌕']
 }
 
+// Animated number counter — counts up to `value` over ~600ms.
+// Used for the headline stats. Falls back to the raw value if reduced motion is preferred.
+function AnimatedNumber({ value, format }) {
+  const [display, setDisplay] = useState(value)
+  const prevRef = useRef(value)
+
+  useEffect(() => {
+    const from = prevRef.current
+    const to = value
+    prevRef.current = to
+    if (from === to) { setDisplay(to); return }
+    if (typeof to !== 'number' || !isFinite(to)) { setDisplay(to); return }
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setDisplay(to); return }
+    const start = performance.now()
+    const dur = 600
+    let raf
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplay(from + (to - from) * eased)
+      if (t < 1) raf = requestAnimationFrame(tick)
+      else setDisplay(to)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value])
+
+  // For numeric stats, format the animated value; for strings, just show it
+  if (typeof display === 'number' && format) return <>{format(display)}</>
+  return <>{display}</>
+}
+
 export default function HomePage() {
-  const { trips, places, routes, setTab, followRoute, currentUser, logout } = useStore()
+  const { trips, places, routes, setTab, followRoute, currentUser, logout, activeTrip, trackingActive } = useStore()
   const [showProfile, setShowProfile] = useState(false)
 
   const recentTrips = [...trips].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3)
@@ -60,16 +92,34 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Continue trip banner — surfaces when a tracking session is paused but not ended */}
+      {trackingActive && activeTrip && (
+        <div style={{ margin: '16px 16px 0', padding: '14px 16px', borderRadius: 18, background: 'linear-gradient(135deg, #fff1e8, #ffe0cc)', border: '1px solid var(--orange-tint)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+          onClick={() => setTab('map')}>
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#fff' }}>🚗</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, color: 'var(--orange-deep)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.6 }}>Trip in progress</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginTop: 1 }}>{activeTrip.name}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--orange-deep)' }}>{formatDistance(activeTrip.distance || 0)}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-mute)' }}>tap to resume</div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '20px 16px 8px' }}>
         {[
-          { icon: '🏁', label: 'Trips', value: trips.length },
-          { icon: '🛣️', label: 'Miles', value: formatDistance(totalDist) },
-          { icon: '🍽️', label: 'Restaurants', value: restaurants.length },
-          { icon: '📍', label: 'Spots', value: destinations.length },
+          { icon: '🏁', label: 'Trips', value: trips.length, format: (v) => String(Math.round(v)) },
+          { icon: '🛣️', label: 'Miles', value: totalDist, format: formatDistance },
+          { icon: '🍽️', label: 'Restaurants', value: restaurants.length, format: (v) => String(Math.round(v)) },
+          { icon: '📍', label: 'Spots', value: destinations.length, format: (v) => String(Math.round(v)) },
         ].map(s => (
           <div key={s.label} style={{ width: 'calc(50% - 5px)', background: 'var(--surface)', borderRadius: 18, padding: '16px 18px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
             <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
-            <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: -0.8, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{s.value}</div>
+            <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: -0.8, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              <AnimatedNumber value={s.value} format={s.format} />
+            </div>
             <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, marginTop: 2 }}>{s.label}</div>
           </div>
         ))}

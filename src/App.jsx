@@ -11,6 +11,7 @@ import StatsPage from './pages/StatsPage'
 import SettingsPage from './pages/SettingsPage'
 import AuthPage from './pages/AuthPage'
 import ErrorBoundary from './components/ErrorBoundary'
+import Toaster from './components/Toaster'
 import { applyTheme } from './theme'
 
 export default function App() {
@@ -31,7 +32,7 @@ export default function App() {
       </div>
     )
   }
-  if (!currentUser) return <ErrorBoundary><AuthPage onAuth={setUser} /></ErrorBoundary>
+  if (!currentUser) return <ErrorBoundary><AuthPage onAuth={setUser} /><Toaster /></ErrorBoundary>
 
   return (
     <ErrorBoundary>
@@ -47,6 +48,7 @@ export default function App() {
           <div style={{ display: activeTab === 'settings' ? 'block' : 'none', height: '100%' }}><SettingsPage /></div>
         </div>
         <NavBar />
+        <Toaster />
       </div>
     </ErrorBoundary>
   )

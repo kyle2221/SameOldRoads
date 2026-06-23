@@ -1,14 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store'
 import { useTheme, useUnits } from '../theme'
 import * as db from '../db'
 import { formatRelative } from '../utils/format'
+import { api, ApiError } from '../services/api'
 
 export default function SettingsPage() {
   const { currentUser, logout, trips, places, routes } = useStore()
   const [theme, setTheme] = useTheme()
   const [units, setUnits] = useUnits()
   const [clearConfirm, setClearConfirm] = useState(false)
+  const [health, setHealth] = useState({ status: 'checking', data: null, err: null })
+
+  // Live ping the backend — surfaces API key misconfig + cache stats to the user.
+  useEffect(() => {
+    let cancelled = false
+    const ctrl = new AbortController()
+    async function check() {
+      try {
+        const data = await api.healthStats({ signal: ctrl.signal })
+        if (!cancelled) setHealth({ status: 'ok', data, err: null })
+      } catch (e) {
+        if (cancelled) return
+        setHealth({ status: 'err', data: null, err: e })
+      }
+    }
+    check()
+    const id = setInterval(check, 30000) // refresh every 30s
+    return () => { cancelled = true; ctrl.abort(); clearInterval(id) }
+  }, [])
 
   async function handleExport() {
     const data = { user: currentUser, trips, places, routes, exportedAt: new Date().toISOString(), version: 1 }
@@ -47,6 +67,61 @@ export default function SettingsPage() {
           <Row icon="✉️" label="Email" value={currentUser?.email || 'Guest account'} />
           <Row icon="🔐" label="Sign-in" value={currentUser?.provider ? currentUser.provider.charAt(0).toUpperCase() + currentUser.provider.slice(1) : '—'} />
           <Row icon="🗓️" label="Joined" value={currentUser?.createdAt ? formatRelative(currentUser.createdAt) : '—'} />
+        </Section>
+
+        {/* Backend health */}
+        <Section title="Backend Status">
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{
+                width: 10, height: 10, borderRadius: '50%',
+                background: health.status === 'ok' ? '#22c55e' : health.status === 'err' ? '#ef4444' : '#f59e0b',
+                boxShadow: health.status === 'ok' ? '0 0 8px rgba(34,197,94,0.6)' : 'none',
+              }} />
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>
+                {health.status === 'ok' ? 'API online' : health.status === 'err' ? 'API unreachable' : 'Checking…'}
+              </div>
+              {health.data?.uptime != null && (
+                <div style={{ fontSize: 11, color: 'var(--text-mute)', marginLeft: 'auto' }}>
+                  uptime {formatDurationLong(health.data.uptime * 1000)}
+                </div>
+              )}
+            </div>
+
+            {health.status === 'ok' && health.data && (
+              <>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                  <KeyBadge label="Google Maps" ok={health.data.keys?.googleMaps} />
+                  <KeyBadge label="SerpApi" ok={health.data.keys?.serpapi} />
+                </div>
+                {/* Cache stats */}
+                {health.data.cache && (
+                  <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '10px 12px' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Server cache (size · hit / miss)</div>
+                    {Object.entries(health.data.cache).map(([name, c]) => (
+                      <div key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '3px 0', color: 'var(--text-soft)' }}>
+                        <span style={{ fontWeight: 600 }}>{name}</span>
+                        <span>{c.size} · {c.hits} / {c.misses}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {health.data.mem && (
+                  <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-mute)' }}>
+                    mem: {health.data.mem.heapUsedMb} / {health.data.mem.heapTotalMb} MB · rss {health.data.mem.rssMb} MB
+                  </div>
+                )}
+              </>
+            )}
+
+            {health.status === 'err' && (
+              <div style={{ fontSize: 12, color: 'var(--text-mute)', lineHeight: 1.5 }}>
+                {health.err?.code === 'NETWORK'
+                  ? 'Could not reach the backend. Make sure the server is running (cd server && npm start) and that VITE_API_BASE is correct.'
+                  : `Error: ${health.err?.message || 'unknown'}`}
+              </div>
+            )}
+          </div>
         </Section>
 
         {/* Appearance */}
@@ -118,9 +193,34 @@ export default function SettingsPage() {
         </Section>
 
         <div style={{ textAlign: 'center', padding: '8px 0 24px', fontSize: 11, color: 'var(--text-mute)' }}>
-          SameOldRoads v1.0 · Made with 🛣️
+          SameOldRoads v1.1.0 · Made with 🛣️
         </div>
       </div>
+    </div>
+  )
+}
+
+function formatDurationLong(ms) {
+  const s = Math.floor((ms || 0) / 1000)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m`
+  return `${sec}s`
+}
+
+function KeyBadge({ label, ok }) {
+  return (
+    <div style={{
+      flex: 1, padding: '8px 10px', borderRadius: 10,
+      background: ok ? '#f0fdf4' : '#fef2f2',
+      border: `1px solid ${ok ? '#bbf7d0' : '#fecaca'}`,
+      display: 'flex', alignItems: 'center', gap: 6,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: ok ? '#22c55e' : '#ef4444' }} />
+      <span style={{ fontSize: 11, fontWeight: 700, color: ok ? '#15803d' : '#b91c1c' }}>{label}</span>
+      <span style={{ fontSize: 10, color: ok ? '#15803d' : '#b91c1c', marginLeft: 'auto' }}>{ok ? 'on' : 'off'}</span>
     </div>
   )
 }

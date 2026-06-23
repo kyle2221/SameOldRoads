@@ -1,0 +1,24 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: sameoldroads
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: .
+    buildCommand: npm ci && npm run build && cd server && npm ci --omit=dev
+    startCommand: node server/src/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8787
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: SERPAPI_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://sameoldroads.onrender.com
