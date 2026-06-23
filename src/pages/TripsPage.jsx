@@ -20,11 +20,11 @@ export default function TripsPage() {
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
       <div style={{
         padding: '54px 20px 22px',
-        background: 'linear-gradient(180deg, #ffd9c2 0%, #ffe9dc 45%, #ffffff 100%)',
+        background: 'linear-gradient(180deg, #ffd0aa 0%, #ffe4d0 42%, #ffffff 100%)',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', top: -90, right: -70, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.45), rgba(255,122,60,0))' }} />
-        <h1 style={{ margin: '0 0 5px', fontSize: 28, fontWeight: 800, color: 'var(--text)', letterSpacing: -0.6, position: 'relative' }}>My Trips</h1>
+        <div style={{ position: 'absolute', top: -80, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.45), transparent)' }} />
+        <h1 style={{ margin: '0 0 5px', fontSize: 30, fontWeight: 900, color: 'var(--text)', letterSpacing: -0.8, position: 'relative' }}>My Trips</h1>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--text-soft)', position: 'relative' }}>{trips.length} trips recorded</p>
       </div>
 
@@ -107,15 +107,17 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
       <div style={{
-        padding: '52px 16px 20px',
-        background: 'linear-gradient(180deg, #ffd9c2 0%, #ffe9dc 55%, #ffffff 100%)',
+        padding: '70px 20px 22px',
+        background: 'linear-gradient(165deg, #120600 0%, #c84a10 70%, #ef5616 100%)',
         position: 'relative', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
       }}>
-        <button onClick={onBack} style={{ position: 'absolute', top: 50, left: 16, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, color: 'var(--text)', width: 38, height: 38, fontSize: 18, cursor: 'pointer', boxShadow: 'var(--shadow-soft)', zIndex: 2 }}>←</button>
-        <div style={{ textAlign: 'center', paddingTop: 6, position: 'relative' }}>
-          <div style={{ fontSize: 34 }}>🚗</div>
-          <h2 style={{ margin: '8px 0 4px', fontSize: 23, color: 'var(--text)', fontWeight: 800, letterSpacing: -0.5 }}>{trip.name}</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-soft)' }}>{formatDate(trip.createdAt)}</div>
+        <div style={{ position: 'absolute', top: -40, right: -30, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08), transparent)', pointerEvents: 'none' }} />
+        <button onClick={onBack} style={{ position: 'absolute', top: 50, left: 16, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 12, color: '#fff', width: 38, height: 38, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>←</button>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Trip</div>
+          <h2 style={{ margin: '0 0 5px', fontSize: 26, color: '#fff', fontWeight: 900, letterSpacing: -0.6, lineHeight: 1.1 }}>{trip.name}</h2>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{formatDate(trip.createdAt)}</div>
         </div>
       </div>
 

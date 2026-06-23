@@ -32,11 +32,11 @@ export default function PlacesPage() {
       {/* Header */}
       <div style={{
         padding: '54px 20px 22px',
-        background: 'linear-gradient(180deg, #ffd9c2 0%, #ffe9dc 45%, #ffffff 100%)',
+        background: 'linear-gradient(180deg, #ffd0aa 0%, #ffe4d0 42%, #ffffff 100%)',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', top: -90, right: -70, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.45), rgba(255,122,60,0))' }} />
-        <h1 style={{ margin: '0 0 5px', fontSize: 28, fontWeight: 800, color: 'var(--text)', letterSpacing: -0.6, position: 'relative' }}>My Places</h1>
+        <div style={{ position: 'absolute', top: -80, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.45), transparent)' }} />
+        <h1 style={{ margin: '0 0 5px', fontSize: 30, fontWeight: 900, color: 'var(--text)', letterSpacing: -0.8, position: 'relative' }}>My Places</h1>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--text-soft)', position: 'relative' }}>
           {restaurants.length} restaurants · {destinations.length} destinations
         </p>
