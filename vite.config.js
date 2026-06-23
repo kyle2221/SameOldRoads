@@ -33,7 +33,7 @@ export default defineConfig({
       manifest: {
         name: 'Same Old Roads',
         short_name: 'SameOldRoads',
-        description: 'Track your trips, follow curated routes, discover places',
+        description: 'Track your trips, follow curated routes, discover places with real Google reviews',
         theme_color: '#ff6a2b',
         background_color: '#ffffff',
         display: 'standalone',
@@ -45,4 +45,15 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      // Proxy /api to the local backend in dev so the frontend can call /api/*
+      // without CORS hassle. Production deploys should put the API on the same
+      // origin (or set VITE_API_BASE).
+      '/api': {
+        target: process.env.SOR_API_TARGET || 'http://localhost:8787',
+        changeOrigin: true,
+      },
+    },
+  },
 })

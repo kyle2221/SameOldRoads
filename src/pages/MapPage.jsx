@@ -41,6 +41,7 @@ export default function MapPage() {
       if (roRef.current) { roRef.current.disconnect(); roRef.current = null }
       if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

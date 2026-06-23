@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate } from '../utils/format'
 import RouteMap from '../components/RouteMap'
+import ReviewsPanel from '../components/ReviewsPanel'
 
 export default function RoutesPage() {
   const { routes, followRoute, saveOwnRoute, trips, places } = useStore()
@@ -124,21 +125,38 @@ function RouteDetail({ route, onBack, onFollow }) {
           <>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-mute)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1.3 }}>Stops Along the Way</div>
             <div style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', padding: '4px 16px', marginBottom: 24 }}>
-              {route.places.map((p, i) => (
-                <div key={p.id} style={{ display: 'flex', gap: 14, padding: '13px 0', alignItems: 'flex-start', borderBottom: i === route.places.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{p.type === 'restaurant' ? '🍽️' : '📍'}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{p.name}</div>
-                    {p.notes && <div style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 3, lineHeight: 1.55 }}>{p.notes}</div>}
-                  </div>
-                </div>
-              ))}
+              {route.places.map((p, i) => <RouteStop key={p.id} p={p} last={i === route.places.length - 1} />)}
             </div>
           </>
         )}
         <button onClick={onFollow} style={{ width: '100%', padding: 17, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none', borderRadius: 16, color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer', letterSpacing: -0.3, boxShadow: '0 8px 24px rgba(239,86,22,0.38)' }}>Follow This Route →</button>
         <div style={{ height: 24 }} />
       </div>
+    </div>
+  )
+}
+
+function RouteStop({ p, last }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ borderBottom: last ? 'none' : '1px solid var(--border-soft)' }}>
+      <div style={{ display: 'flex', gap: 14, padding: '13px 0', alignItems: 'flex-start' }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{p.type === 'restaurant' ? '🍽️' : '📍'}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', flex: 1, minWidth: 0 }}>{p.name}</div>
+            <button onClick={() => setOpen((o) => !o)} style={{ background: 'var(--orange-wash)', border: '1px solid var(--orange-tint)', borderRadius: 9, padding: '5px 11px', fontSize: 11, fontWeight: 700, color: 'var(--orange-deep)', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}>
+              {open ? 'Hide reviews' : '★ Reviews'}
+            </button>
+          </div>
+          {p.notes && <div style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 3, lineHeight: 1.55 }}>{p.notes}</div>}
+        </div>
+      </div>
+      {open && (
+        <div style={{ paddingBottom: 14 }}>
+          <ReviewsPanel query={`${p.name}`} lat={p.lat} lng={p.lng} limit={3} compact />
+        </div>
+      )}
     </div>
   )
 }

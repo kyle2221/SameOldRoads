@@ -79,8 +79,8 @@ export default function HomePage() {
         <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 12, fontWeight: 700 }}>Quick Start</div>
         <div style={{ display: 'flex', gap: 10 }}>
           <QuickBtn icon="🚗" label="Start Trip" sub="Track your route" onClick={() => setTab('map')} accent />
-          <QuickBtn icon="🧭" label="Explore" sub="Find routes" onClick={() => setTab('routes')} />
-          <QuickBtn icon="⭐" label="Places" sub="My saved spots" onClick={() => setTab('places')} />
+          <QuickBtn icon="🧭" label="Discover" sub="Find places + reviews" onClick={() => setTab('discover')} />
+          <QuickBtn icon="📊" label="Stats" sub="Your numbers" onClick={() => setTab('stats')} />
         </div>
       </div>
 

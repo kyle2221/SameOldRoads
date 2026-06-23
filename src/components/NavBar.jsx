@@ -8,19 +8,20 @@ export default function NavBar() {
       display: 'flex', alignItems: 'center',
       padding: '6px 4px',
       paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
-      background: 'rgba(255,255,255,0.96)',
+      background: 'var(--nav-bg)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-      borderTop: '0.5px solid rgba(0,0,0,0.07)',
-      boxShadow: '0 -6px 24px rgba(20,20,30,0.08)',
+      borderTop: `0.5px solid var(--nav-border)`,
+      boxShadow: 'var(--shadow-nav)',
     }}>
       <NavTab id="home" label="Home" Icon={HomeIcon} activeTab={activeTab} setTab={setTab} />
+      <NavTab id="discover" label="Discover" Icon={CompassIcon} activeTab={activeTab} setTab={setTab} />
       <NavTab id="routes" label="Routes" Icon={RouteIcon} activeTab={activeTab} setTab={setTab} />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <button onClick={() => setTab('map')} style={{
+      <div style={{ flex: 0.85, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <button onClick={() => setTab('map')} aria-label="Track a trip" style={{
           width: 54, height: 54, borderRadius: '50%',
           background: 'linear-gradient(145deg, #ff8a52 0%, #ef5616 100%)',
-          border: '3px solid #fff',
+          border: '3px solid var(--surface)',
           boxShadow: activeTab === 'map'
             ? '0 0 0 2.5px var(--orange-deep), 0 4px 22px rgba(239,86,22,0.55)'
             : '0 3px 18px rgba(239,86,22,0.4)',
@@ -49,7 +50,8 @@ export default function NavBar() {
       </div>
 
       <NavTab id="places" label="Places" Icon={PlaceIcon} activeTab={activeTab} setTab={setTab} />
-      <NavTab id="trips" label="Trips" Icon={TripIcon} activeTab={activeTab} setTab={setTab} />
+      <NavTab id="stats" label="Stats" Icon={ChartIcon} activeTab={activeTab} setTab={setTab} />
+      <NavTab id="settings" label="Settings" Icon={SettingsIcon} activeTab={activeTab} setTab={setTab} />
 
       <style>{`
         @keyframes recPulse {
@@ -64,7 +66,7 @@ export default function NavBar() {
 function NavTab({ id, label, Icon, activeTab, setTab }) {
   const active = activeTab === id
   return (
-    <button onClick={() => setTab(id)} style={{
+    <button onClick={() => setTab(id)} aria-label={label} style={{
       flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
       padding: '5px 2px 4px', background: 'none', border: 'none', cursor: 'pointer',
       color: active ? 'var(--orange-deep)' : 'var(--text-mute)', transition: 'color 0.18s',
@@ -72,7 +74,7 @@ function NavTab({ id, label, Icon, activeTab, setTab }) {
       <div style={{ padding: '5px 10px', borderRadius: 12, background: active ? 'var(--orange-wash)' : 'transparent', transition: 'background 0.18s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon size={20} active={active} />
       </div>
-      <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500, letterSpacing: 0.3 }}>{label}</span>
+      <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, letterSpacing: 0.3 }}>{label}</span>
     </button>
   )
 }
@@ -82,6 +84,15 @@ function HomeIcon({ size, active }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill={active ? 'var(--orange-wash)' : 'none'} stroke="currentColor" strokeWidth={2}>
       <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
       <path d="M9 21V12h6v9"/>
+    </svg>
+  )
+}
+
+function CompassIcon({ size, active }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="9" fill={active ? 'var(--orange-wash)' : 'none'} />
+      <polygon points="16,8 13,13 8,16 11,11" fill={active ? 'var(--orange-deep)' : 'currentColor'} />
     </svg>
   )
 }
@@ -104,11 +115,22 @@ function PlaceIcon({ size, active }) {
   )
 }
 
-function TripIcon({ size, active }) {
+function ChartIcon({ size, active }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <rect x="3" y="4" width="18" height="16" rx="2" fill={active ? 'var(--orange-wash)' : 'none'}/>
-      <path d="M3 9h18M8 4v5M16 4v5"/>
+      <path d="M3 21h18" />
+      <rect x="5" y="13" width="3" height="6" fill={active ? 'var(--orange-wash)' : 'none'} />
+      <rect x="10.5" y="9" width="3" height="10" fill={active ? 'var(--orange-wash)' : 'none'} />
+      <rect x="16" y="5" width="3" height="14" fill={active ? 'var(--orange-wash)' : 'none'} />
+    </svg>
+  )
+}
+
+function SettingsIcon({ size, active }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="3" fill={active ? 'var(--orange-wash)' : 'none'} />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
     </svg>
   )
 }

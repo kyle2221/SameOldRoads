@@ -1,15 +1,19 @@
 import { create } from 'zustand'
 import * as db from './db'
 import { SAMPLE_ROUTES } from './utils/sampleData'
-import { getCurrentUser, signOut } from './auth'
+import { getCurrentUser, signOut, migrateLegacyPasswords } from './auth'
+
+export const TABS = ['home', 'discover', 'map', 'routes', 'places', 'trips', 'stats', 'settings']
 
 export const useStore = create((set, get) => ({
   currentUser: getCurrentUser(),
   trips: [], places: [], routes: [], activeTrip: null,
   activeTab: 'home', trackingActive: false, currentPath: [],
   selectedRoute: null, followingRoute: null,
+  authReady: false,
 
-  setUser: (user) => set({ currentUser: user }),
+  setUser: (user) => set({ currentUser: user, authReady: true }),
+  initAuth: async () => { try { await migrateLegacyPasswords() } catch {} set({ authReady: true }) },
   logout: () => { signOut(); set({ currentUser: null, trips: [], places: [], routes: [], activeTrip: null, trackingActive: false, currentPath: [] }) },
 
   loadAll: async () => {
@@ -52,6 +56,7 @@ export const useStore = create((set, get) => ({
   updatePlace: async (place) => { await db.savePlace(place); set((s) => ({ places: s.places.map((p) => p.id === place.id ? place : p) })) },
   deletePlace: async (id) => { await db.deletePlace(id); set((s) => ({ places: s.places.filter((p) => p.id !== id) })) },
   deleteTrip: async (id) => { await db.deleteTrip(id); set((s) => ({ trips: s.trips.filter((t) => t.id !== id), places: s.places.filter((p) => p.tripId !== id) })) },
+  deleteRoute: async (id) => { await db.deleteRoute(id); set((s) => ({ routes: s.routes.filter((r) => r.id !== id) })) },
   followRoute: (route) => set({ followingRoute: route, activeTab: 'map' }),
   stopFollowing: () => set({ followingRoute: null }),
   setSelectedRoute: (route) => set({ selectedRoute: route }),
