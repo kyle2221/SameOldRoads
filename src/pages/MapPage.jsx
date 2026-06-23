@@ -185,7 +185,7 @@ export default function MapPage() {
             marginBottom: 8, paddingLeft: 4,
           }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'block', animation: 'recPulse 1.4s ease-in-out infinite', boxShadow: '0 0 6px rgba(255,59,48,0.6)' }} />
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: 0.5, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{activeTrip?.name}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1, textShadow: '0 1px 4px rgba(0,0,0,0.5)', textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{activeTrip?.name}</span>
           </div>
           {/* Main HUD */}
           <div style={{
@@ -197,14 +197,14 @@ export default function MapPage() {
             display: 'flex', alignItems: 'center', gap: 0,
           }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, marginBottom: 2, letterSpacing: 0.3 }}>Duration</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: -1, lineHeight: 1 }}>{formatDuration(elapsed)}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Duration</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', letterSpacing: -0.5, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif" }}>{formatDuration(elapsed)}</div>
             </div>
             <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.12)', margin: '0 16px' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, marginBottom: 2, letterSpacing: 0.3 }}>Distance</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Distance</div>
               <div style={{
-                fontSize: 28, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+                fontSize: 32, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif",
                 background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>{formatDistance(activeTrip?.distance || 0)}</div>
@@ -236,8 +236,8 @@ export default function MapPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 32, height: 4, borderRadius: 4, background: 'linear-gradient(90deg, #ff8a52, #ef5616)', boxShadow: '0 0 8px rgba(255,140,60,0.5)' }} />
             <div>
-              <div style={{ fontSize: 10, color: 'rgba(255,180,100,0.7)', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 2 }}>Following Route</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{followingRoute.name}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,180,100,0.7)', textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700, marginBottom: 2, fontFamily: "'Rajdhani', sans-serif" }}>Following Route</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.2 }}>{followingRoute.name}</div>
             </div>
           </div>
           <button onClick={stopFollowing} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 11, color: 'rgba(255,255,255,0.8)', padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
@@ -252,10 +252,10 @@ export default function MapPage() {
           position: 'absolute', bottom: 24, left: 20, right: 20,
           background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none',
           borderRadius: 20, padding: '17px 0',
-          fontSize: 16, fontWeight: 900, color: '#fff', cursor: 'pointer', zIndex: 1000,
+          fontSize: 19, fontWeight: 700, color: '#fff', cursor: 'pointer', zIndex: 1000,
           boxShadow: '0 8px 28px rgba(239,86,22,0.52)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          letterSpacing: 0.2,
+          letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif",
         }}>
           <span style={{ fontSize: 20 }}>🚗</span>
           Start a Trip
@@ -314,7 +314,7 @@ function Modal({ title, children, onClose }) {
       }} onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 4, margin: '0 auto 14px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>{title}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.3 }}>{title}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
@@ -338,6 +338,7 @@ const inputStyle = {
 const primaryBtn = {
   width: '100%', padding: '14px', borderRadius: 14,
   background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none',
-  color: 'var(--on-orange)', fontSize: 16, fontWeight: 800, cursor: 'pointer',
+  color: 'var(--on-orange)', fontSize: 18, fontWeight: 700, cursor: 'pointer',
   boxShadow: '0 6px 18px rgba(239,86,22,0.3)',
+  fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
 }

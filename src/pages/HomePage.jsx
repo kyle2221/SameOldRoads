@@ -244,7 +244,7 @@ function HomeRouteCard({ route, onFollow }) {
             {formatDistance(route.distance || 0)}
           </span>
         </div>
-        <div style={{ fontSize: 15, fontWeight: 900, color: '#fff', letterSpacing: -0.4, lineHeight: 1.2, textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: -0.2, lineHeight: 1.05, textShadow: '0 1px 8px rgba(0,0,0,0.5)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>
           {route.name}
         </div>
         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>by {route.author}</div>

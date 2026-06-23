@@ -19,13 +19,17 @@ export default function TripsPage() {
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
       <div style={{
-        padding: '54px 20px 22px',
-        background: 'linear-gradient(180deg, #ffd0aa 0%, #ffe4d0 42%, #ffffff 100%)',
+        padding: '54px 20px 28px',
+        background: 'linear-gradient(170deg, #0e0500 0%, #1e0a02 45%, #7a2606 80%, #c43d0c 100%)',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', top: -80, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.45), transparent)' }} />
-        <h1 style={{ margin: '0 0 5px', fontSize: 30, fontWeight: 900, color: 'var(--text)', letterSpacing: -0.8, position: 'relative' }}>My Trips</h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-soft)', position: 'relative' }}>{trips.length} trips recorded</p>
+        <div style={{ position: 'absolute', top: -60, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.2), transparent)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -30, left: -20, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,80,20,0.12), transparent)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 10, letterSpacing: 3, color: 'rgba(255,200,140,0.6)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, fontFamily: "'Rajdhani', sans-serif" }}>Logbook</div>
+          <h1 style={{ margin: '0 0 6px', fontSize: 36, fontWeight: 900, color: '#fff', letterSpacing: -0.5, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>My Trips</h1>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,220,180,0.55)', fontWeight: 500 }}>{trips.length} trips recorded</p>
+        </div>
       </div>
 
       {sorted.length === 0 && (
@@ -58,7 +62,7 @@ export default function TripsPage() {
                     <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2 }}>{formatDate(trip.createdAt)}</div>
                   </div>
                   <div style={{ textAlign: 'right', marginLeft: 12, flexShrink: 0 }}>
-                    <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.5 }}>{formatDistance(trip.distance || 0)}</div>
+                    <div style={{ fontSize: 21, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.3, fontFamily: "'Rajdhani', sans-serif" }}>{formatDistance(trip.distance || 0)}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 1 }}>{formatDuration(trip.duration || 0)}</div>
                   </div>
                 </div>
@@ -122,8 +126,8 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
         <div style={{ position: 'absolute', top: -40, right: -30, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08), transparent)', pointerEvents: 'none' }} />
         <button onClick={onBack} style={{ position: 'absolute', top: 50, left: 16, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 12, color: '#fff', width: 38, height: 38, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>←</button>
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Trip</div>
-          <h2 style={{ margin: '0 0 5px', fontSize: 26, color: '#fff', fontWeight: 900, letterSpacing: -0.6, lineHeight: 1.1 }}>{trip.name}</h2>
+          <div style={{ fontSize: 10, color: 'rgba(255,200,140,0.6)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8, fontFamily: "'Rajdhani', sans-serif" }}>Trip</div>
+          <h2 style={{ margin: '0 0 5px', fontSize: 32, color: '#fff', fontWeight: 900, letterSpacing: -0.4, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>{trip.name}</h2>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{formatDate(trip.createdAt)}</div>
         </div>
       </div>
@@ -137,8 +141,8 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
             { label: 'Stops', value: places.length },
           ].map(s => (
             <div key={s.label} style={{ flex: 1, background: 'var(--surface)', borderRadius: 14, padding: '13px 6px', textAlign: 'center', border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--orange-deep)' }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--orange-deep)', fontFamily: "'Rajdhani', sans-serif", letterSpacing: -0.3 }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
             </div>
           ))}
         </div>

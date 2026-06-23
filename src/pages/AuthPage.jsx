@@ -9,9 +9,10 @@ const inputStyle = {
 }
 
 const btnPrimary = {
-  width: '100%', padding: '15px 0', borderRadius: 14, fontSize: 16, fontWeight: 800,
+  width: '100%', padding: '15px 0', borderRadius: 14, fontSize: 18, fontWeight: 700,
   background: 'linear-gradient(135deg, #ff8a52, #ef5616)', color: '#fff', border: 'none',
   boxShadow: '0 6px 20px rgba(239,86,22,0.35)', cursor: 'pointer', marginBottom: 10,
+  fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.6,
 }
 
 const btnOutline = {

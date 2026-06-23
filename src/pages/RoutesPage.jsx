@@ -127,7 +127,7 @@ function RouteCard({ route, onTap, onFollow }) {
         position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '0 15px 14px',
       }}>
         <div style={{ flex: 1, paddingRight: 10 }}>
-          <div style={{ fontSize: 17, fontWeight: 900, color: '#fff', letterSpacing: -0.4, lineHeight: 1.2 }}>{route.name}</div>
+          <div style={{ fontSize: 21, fontWeight: 800, color: '#fff', letterSpacing: -0.2, lineHeight: 1.05, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>{route.name}</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.58)', marginTop: 3, fontWeight: 500 }}>by {route.author}</div>
         </div>
         <div style={{ background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '5px 11px', border: '1px solid rgba(255,255,255,0.14)', flexShrink: 0 }}>
@@ -185,10 +185,10 @@ function RouteDetail({ route, onBack, onFollow }) {
         }}>←</button>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,200,140,0.6)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8, fontFamily: "'Rajdhani', sans-serif" }}>
             by {route.author}
           </div>
-          <h2 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: -0.7, lineHeight: 1.1 }}>
+          <h2 style={{ margin: '0 0 6px', fontSize: 34, fontWeight: 900, color: '#fff', letterSpacing: -0.4, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>
             {route.name}
           </h2>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>
@@ -205,8 +205,8 @@ function RouteDetail({ route, onBack, onFollow }) {
           { label: 'Places', value: route.places?.length || 0 },
         ].map((s, i) => (
           <div key={s.label} style={{ flex: 1, padding: '14px 0', textAlign: 'center', borderRight: i < 2 ? '1px solid var(--border)' : 'none' }}>
-            <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.5 }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 2 }}>{s.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.3, fontFamily: "'Rajdhani', sans-serif" }}>{s.value}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', marginTop: 2, fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -244,8 +244,9 @@ function RouteDetail({ route, onBack, onFollow }) {
         <button onClick={onFollow} style={{
           width: '100%', padding: 17,
           background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none', borderRadius: 16,
-          color: '#fff', fontSize: 16, fontWeight: 900, cursor: 'pointer', letterSpacing: -0.3,
+          color: '#fff', fontSize: 19, fontWeight: 700, cursor: 'pointer', letterSpacing: 0.6,
           boxShadow: '0 8px 24px rgba(239,86,22,0.38)',
+          fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase',
         }}>
           Follow This Route →
         </button>

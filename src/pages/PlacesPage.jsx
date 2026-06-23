@@ -31,15 +31,19 @@ export default function PlacesPage() {
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
       {/* Header */}
       <div style={{
-        padding: '54px 20px 22px',
-        background: 'linear-gradient(180deg, #ffd0aa 0%, #ffe4d0 42%, #ffffff 100%)',
+        padding: '54px 20px 28px',
+        background: 'linear-gradient(170deg, #0e0500 0%, #1e0a02 45%, #7a2606 80%, #c43d0c 100%)',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', top: -80, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.45), transparent)' }} />
-        <h1 style={{ margin: '0 0 5px', fontSize: 30, fontWeight: 900, color: 'var(--text)', letterSpacing: -0.8, position: 'relative' }}>My Places</h1>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--text-soft)', position: 'relative' }}>
-          {restaurants.length} restaurants · {destinations.length} destinations
-        </p>
+        <div style={{ position: 'absolute', top: -60, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,122,60,0.2), transparent)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -30, left: -20, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,80,20,0.12), transparent)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 10, letterSpacing: 3, color: 'rgba(255,200,140,0.6)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6, fontFamily: "'Rajdhani', sans-serif" }}>Saved</div>
+          <h1 style={{ margin: '0 0 6px', fontSize: 36, fontWeight: 900, color: '#fff', letterSpacing: -0.5, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>My Places</h1>
+          <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,220,180,0.55)', fontWeight: 500 }}>
+            {restaurants.length} restaurants · {destinations.length} destinations
+          </p>
+        </div>
       </div>
 
       {/* Search */}
