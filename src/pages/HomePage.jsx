@@ -124,6 +124,9 @@ export default function HomePage() {
           ))}
         </div>
 
+        {/* This Week */}
+        <ThisWeek trips={trips} />
+
         {/* Quick actions */}
         <div style={{ padding: '16px 16px 20px' }}>
           <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
@@ -283,6 +286,83 @@ function HomeRouteCard({ route, onFollow }) {
         }}>
           Follow Route →
         </button>
+      </div>
+    </div>
+  )
+}
+
+function ThisWeek({ trips }) {
+  const DAY_LABELS = ['S','M','T','W','T','F','S']
+  const today = new Date()
+  const todayDay = today.getDay() // 0=Sun
+  // Build 7-day window ending today
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - (6 - i))
+    return d
+  })
+  // Sum distance per day
+  const distByDay = days.map(d => {
+    const start = new Date(d); start.setHours(0,0,0,0)
+    const end   = new Date(d); end.setHours(23,59,59,999)
+    return trips
+      .filter(t => t.createdAt >= start.getTime() && t.createdAt <= end.getTime())
+      .reduce((s, t) => s + (t.distance || 0), 0)
+  })
+  const weekDist = distByDay.reduce((s, d) => s + d, 0)
+  const weekKm   = (weekDist / 1000).toFixed(1)
+  const maxDay   = Math.max(1, ...distByDay)
+  const activeDays = distByDay.filter(d => d > 0).length
+
+  return (
+    <div style={{ padding: '0 16px 4px' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', padding: '16px 18px', boxShadow: 'var(--shadow-soft)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginBottom: 4 }}>This Week</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{
+                fontSize: 36, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+                fontFamily: "'Rajdhani', sans-serif",
+                background: 'linear-gradient(135deg, #ff8a52, #fc4c02)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              }}>{weekKm}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-mute)', fontFamily: "'Rajdhani', sans-serif" }}>km</span>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", lineHeight: 1 }}>{activeDays}</div>
+            <div style={{ fontSize: 9.5, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginTop: 2 }}>Active Days</div>
+          </div>
+        </div>
+        {/* Day bars */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 52 }}>
+          {distByDay.map((dist, i) => {
+            const isToday = i === 6
+            const pct = dist > 0 ? Math.max(10, (dist / maxDay) * 100) : 0
+            return (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: 5 }}>
+                <div style={{
+                  width: '100%', borderRadius: '4px 4px 2px 2px',
+                  height: dist > 0 ? `${pct}%` : 3,
+                  background: dist > 0
+                    ? isToday
+                      ? 'linear-gradient(180deg, #ff8a52, #fc4c02)'
+                      : 'rgba(252,76,2,0.35)'
+                    : 'var(--border)',
+                  boxShadow: dist > 0 && isToday ? '0 2px 8px rgba(252,76,2,0.35)' : 'none',
+                  transition: 'height 0.3s ease',
+                }} />
+                <span style={{
+                  fontSize: 9, fontWeight: isToday ? 800 : 600,
+                  color: isToday ? '#fc4c02' : 'var(--text-mute)',
+                  fontFamily: "'Rajdhani', sans-serif",
+                  letterSpacing: 0.5,
+                }}>{DAY_LABELS[(days[i].getDay())]}</span>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

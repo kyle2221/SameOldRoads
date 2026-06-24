@@ -52,67 +52,69 @@ export default function TripsPage() {
           </div>
         )}
 
-        <div style={{ padding: '20px 16px 0' }}>
+        <div style={{ padding: '16px 16px 0' }}>
           {sorted.map(trip => {
             const rCount = places.filter(p => p.tripId === trip.id && p.type === 'restaurant').length
             const dCount = places.filter(p => p.tripId === trip.id && p.type === 'destination').length
+            const distKm = (trip.distance || 0) / 1000
             return (
               <div
                 key={trip.id}
                 className="pressable"
                 onClick={() => setSelected(trip.id)}
                 style={{
-                  background: 'var(--surface)', borderRadius: 20, marginBottom: 14,
+                  background: 'var(--surface)', borderRadius: 22, marginBottom: 16,
                   border: '1px solid var(--border)', overflow: 'hidden',
                   boxShadow: 'var(--shadow-soft)',
                 }}
               >
-                {/* Photo / RouteThumb header — RouteThumb always renders; photo overlays on load */}
-                <div style={{ position: 'relative', height: 140 }}>
-                  <RouteThumb path={trip.path} height={140} />
+                {/* Activity header — like Strava's athlete row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px 10px' }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ff8a52, #fc4c02)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, fontSize: 14, fontWeight: 800, color: '#fff',
+                    fontFamily: "'Rajdhani', sans-serif",
+                  }}>
+                    <IconCar size={18} color="#fff" sw={2} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 600, marginTop: 1 }}>{formatDate(trip.createdAt)}</div>
+                  </div>
+                  {(rCount + dCount > 0) && (
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      {rCount > 0 && <Chip icon={<IconUtensils size={11} color="var(--text-mute)" sw={2}/>} label={rCount} />}
+                      {dCount > 0 && <Chip icon={<IconPin size={11} color="var(--text-mute)" sw={2}/>} label={dCount} />}
+                    </div>
+                  )}
+                </div>
+
+                {/* Route thumbnail */}
+                <div style={{ position: 'relative', height: 130, margin: '0 0', background: '#0e0e0e' }}>
+                  <RouteThumb path={trip.path} height={130} />
                   {trip.photo && (
-                    <img
-                      src={trip.photo} alt={trip.name}
+                    <img src={trip.photo} alt={trip.name}
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       onError={e => { e.target.style.display = 'none' }}
                     />
                   )}
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.04) 30%, rgba(10,4,0,0.68) 100%)', pointerEvents: 'none' }} />
-                  <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '4px 10px', border: '1px solid rgba(255,255,255,0.14)' }}>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: "'Rajdhani', sans-serif", letterSpacing: 0.2 }}>{formatDistance(trip.distance || 0)}</span>
-                  </div>
-                  <div style={{ position: 'absolute', left: 14, bottom: 10, right: 14 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: -0.2, lineHeight: 1.05, textShadow: '0 1px 8px rgba(0,0,0,0.6)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 1, fontWeight: 600 }}>{formatDate(trip.createdAt)}</div>
-                  </div>
                 </div>
 
-                {/* Stats footer */}
-                <div style={{ display: 'flex', alignItems: 'center', padding: '11px 14px', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <IconClock size={13} color="var(--text-mute)" sw={2} />
-                    <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700, fontFamily: "'Rajdhani', sans-serif" }}>{formatDuration(trip.duration || 0)}</span>
-                  </div>
-                  {trip.avgSpeed ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <IconZap size={13} color="var(--text-mute)" sw={2} />
-                      <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700, fontFamily: "'Rajdhani', sans-serif" }}>{formatSpeed(trip.avgSpeed)}</span>
-                    </div>
-                  ) : null}
+                {/* Big stats footer — Strava style */}
+                <div style={{ display: 'flex', padding: '14px 16px 15px', gap: 0 }}>
+                  <StatBlock value={distKm >= 1 ? `${distKm.toFixed(1)}km` : `${Math.round((trip.distance||0))}m`} label="Distance" accent />
+                  <StatDivider />
+                  <StatBlock value={formatDuration(trip.duration || 0)} label="Time" />
+                  {(trip.avgSpeed || 0) > 0 && (
+                    <>
+                      <StatDivider />
+                      <StatBlock value={formatSpeed(trip.avgSpeed)} label="Avg Speed" />
+                    </>
+                  )}
                   <div style={{ flex: 1 }} />
-                  {rCount > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--surface-2)', borderRadius: 7, padding: '3px 8px' }}>
-                      <IconUtensils size={11} color="var(--text-mute)" sw={2} />
-                      <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 700 }}>{rCount}</span>
-                    </div>
-                  )}
-                  {dCount > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--surface-2)', borderRadius: 7, padding: '3px 8px' }}>
-                      <IconPin size={11} color="var(--text-mute)" sw={2} />
-                      <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 700 }}>{dCount}</span>
-                    </div>
-                  )}
-                  <span style={{ color: 'var(--text-mute)', fontSize: 18, marginLeft: 2 }}>›</span>
+                  <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-mute)', fontSize: 20, paddingLeft: 8 }}>›</div>
                 </div>
               </div>
             )
@@ -288,6 +290,35 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
 
         <div style={{ height: 24 }} />
       </div>
+    </div>
+  )
+}
+
+function StatBlock({ value, label, accent }) {
+  return (
+    <div style={{ minWidth: 64 }}>
+      <div style={{
+        fontSize: 26, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1,
+        fontFamily: "'Rajdhani', sans-serif",
+        ...(accent ? {
+          background: 'linear-gradient(135deg, #ff8a52, #fc4c02)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        } : { color: 'var(--text)' }),
+      }}>{value}</div>
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-mute)', letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginTop: 2 }}>{label}</div>
+    </div>
+  )
+}
+
+function StatDivider() {
+  return <div style={{ width: 1, height: 32, background: 'var(--border)', margin: '0 16px', alignSelf: 'center' }} />
+}
+
+function Chip({ icon, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--surface-2)', borderRadius: 8, padding: '3px 8px' }}>
+      {icon}
+      <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 700 }}>{label}</span>
     </div>
   )
 }
