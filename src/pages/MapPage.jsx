@@ -248,11 +248,12 @@ export default function MapPage() {
             <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 10 }}>
               <span style={{ fontSize: 16, opacity: 0.5 }}>🔍</span>
               <input
+                className="input-field"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search places, cities, roads..."
                 style={{
-                  flex: 1, border: 'none', outline: 'none', fontSize: 15,
+                  flex: 1, border: 'none', fontSize: 15,
                   background: 'transparent', color: 'var(--text)',
                   fontFamily: "'Rajdhani', sans-serif", fontWeight: 500,
                 }}
@@ -367,6 +368,7 @@ export default function MapPage() {
       {showNameModal && (
         <Modal title="Name Your Trip" onClose={() => setShowNameModal(false)}>
           <input
+            className="input-field"
             autoFocus
             placeholder="e.g. Weekend in the Mountains"
             value={tripName}
@@ -393,8 +395,8 @@ export default function MapPage() {
               </button>
             ))}
           </div>
-          <input placeholder="Place name" value={newPlace.name} onChange={e => setNewPlace(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
-          <textarea placeholder="Notes (optional)" value={newPlace.notes} onChange={e => setNewPlace(p => ({ ...p, notes: e.target.value }))} style={{ ...inputStyle, height: 68, resize: 'none' }} />
+          <input className="input-field" placeholder="Place name" value={newPlace.name} onChange={e => setNewPlace(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
+          <textarea className="input-field" placeholder="Notes (optional)" value={newPlace.notes} onChange={e => setNewPlace(p => ({ ...p, notes: e.target.value }))} style={{ ...inputStyle, height: 68, resize: 'none' }} />
 
           {/* Photo capture */}
           {newPlace.photo ? (
@@ -465,7 +467,7 @@ function Modal({ title, children, onClose }) {
 const inputStyle = {
   width: '100%', padding: '13px 14px', borderRadius: 13,
   background: 'var(--surface-2)', border: '1px solid var(--border)',
-  color: 'var(--text)', fontSize: 15, outline: 'none',
+  color: 'var(--text)', fontSize: 15,
 }
 
 const primaryBtn = {

@@ -119,7 +119,7 @@ export default function RoutesPage() {
 
 function RouteCard({ route, onTap, onFollow }) {
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: 22, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', cursor: 'pointer' }} onClick={onTap}>
+    <div className="pressable" style={{ background: 'var(--surface)', borderRadius: 22, overflow: 'hidden', border: '1px solid var(--border)' }} onClick={onTap}>
       {/* Dark gradient hero with text inside */}
       <div style={{
         height: 118,

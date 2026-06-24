@@ -46,11 +46,12 @@ export default function TripsPage() {
           return (
             <div
               key={trip.id}
+              className="pressable"
               onClick={() => setSelected(trip.id)}
               style={{
                 background: 'var(--surface)', borderRadius: 20, marginBottom: 13,
-                border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-card)',
-                display: 'flex', cursor: 'pointer',
+                border: '1px solid var(--border)', overflow: 'hidden',
+                display: 'flex',
               }}
             >
               {/* Left accent stripe */}
@@ -160,7 +161,7 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
             { label: 'Avg Speed', value: formatSpeed(trip.avgSpeed || 0) },
             { label: 'Top Speed', value: formatSpeed(trip.maxSpeed || 0) },
           ].map(s => (
-            <div key={s.label} style={{ flex: '1 1 calc(33% - 8px)', minWidth: 80, background: 'var(--surface)', borderRadius: 14, padding: '12px 8px', textAlign: 'center', border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)' }}>
+            <div key={s.label} style={{ flex: '1 1 calc(33% - 8px)', minWidth: 80, background: 'var(--surface)', borderRadius: 14, padding: '12px 8px', textAlign: 'center', border: '1px solid var(--border)' }}>
               <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--orange-deep)', fontFamily: "'Rajdhani', sans-serif", letterSpacing: -0.3 }}>{s.value}</div>
               <div style={{ fontSize: 9, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginTop: 2 }}>{s.label}</div>
             </div>
@@ -224,7 +225,7 @@ function PlaceGroup({ title, places }) {
   return (
     <div style={{ marginBottom: 18 }}>
       <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-mute)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5, fontFamily: "'Rajdhani', sans-serif" }}>{title}</div>
-      <div style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden' }}>
         {places.map((p, i) => (
           <div key={p.id} style={{ borderBottom: i === places.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>
             {p.photo && <img src={p.photo} alt={p.name} style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />}

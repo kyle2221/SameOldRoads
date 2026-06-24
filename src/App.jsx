@@ -20,7 +20,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 0 80px rgba(0,0,0,0.14)' }}>
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         <div style={{ display: activeTab === 'home' ? 'block' : 'none', height: '100%' }}><HomePage /></div>
         <div style={{ display: activeTab === 'map' ? 'block' : 'none', height: '100%' }}><MapPage /></div>

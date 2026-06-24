@@ -11,6 +11,7 @@ export default function NodeBackground({ color = '#ff8c3c', count = 42, connectD
   const canvasRef = useRef(null)
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')

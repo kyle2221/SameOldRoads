@@ -120,7 +120,6 @@ export default function HomePage() {
             background: 'var(--surface)', borderRadius: 18,
             padding: '16px 18px',
             border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-card)',
           }}>
             <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
             <div style={{
@@ -196,14 +195,13 @@ export default function HomePage() {
 
 function QuickBtn({ icon, label, sub, onClick, accent }) {
   return (
-    <button onClick={onClick} style={{
+    <button className="pressable" onClick={onClick} style={{
       flex: 1, padding: '16px 8px 14px',
       background: accent ? 'linear-gradient(145deg, #ff8a52, #ef5616)' : 'var(--surface)',
       border: `1px solid ${accent ? 'transparent' : 'var(--border)'}`,
-      borderRadius: 20, color: accent ? '#fff' : 'var(--text)', cursor: 'pointer',
+      borderRadius: 20, color: accent ? '#fff' : 'var(--text)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-      boxShadow: accent ? '0 6px 22px rgba(239,86,22,0.36)' : 'var(--shadow-soft)',
-      transition: 'transform 0.12s',
+      boxShadow: accent ? '0 6px 22px rgba(239,86,22,0.36)' : 'none',
     }}>
       <span style={{ fontSize: 24 }}>{icon}</span>
       <div>
@@ -232,7 +230,7 @@ function Section({ title, action, onAction, children }) {
 
 function HomeRouteCard({ route, onFollow }) {
   return (
-    <div style={{ minWidth: 200, borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', flexShrink: 0, background: 'var(--surface)' }}>
+    <div style={{ minWidth: 200, borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0, background: 'var(--surface)' }}>
       {/* Dark image header */}
       <div style={{
         height: 108, position: 'relative', overflow: 'hidden',

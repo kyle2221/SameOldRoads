@@ -49,13 +49,14 @@ export default function PlacesPage() {
       {/* Search */}
       <div style={{ padding: '16px 16px 12px' }}>
         <input
+          className="input-field"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="🔍  Search places..."
           style={{
             width: '100%', padding: '13px 16px', borderRadius: 14,
             background: 'var(--surface-2)', border: '1px solid var(--border)',
-            color: 'var(--text)', fontSize: 15, outline: 'none',
+            color: 'var(--text)', fontSize: 15,
           }}
         />
       </div>
@@ -118,11 +119,11 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
             }}>{t === 'restaurant' ? '🍽️ Restaurant' : '📍 Destination'}</button>
           ))}
         </div>
-        <input value={editData.name} onChange={e => setEditData(d => ({ ...d, name: e.target.value }))}
-          style={{ width: '100%', padding: '11px 12px', borderRadius: 11, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, outline: 'none', marginBottom: 8 }} />
-        <textarea value={editData.notes} onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))}
+        <input className="input-field" value={editData.name} onChange={e => setEditData(d => ({ ...d, name: e.target.value }))}
+          style={{ width: '100%', padding: '11px 12px', borderRadius: 11, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, marginBottom: 8 }} />
+        <textarea className="input-field" value={editData.notes} onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))}
           placeholder="Notes..."
-          style={{ width: '100%', padding: '11px 12px', borderRadius: 11, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'none', height: 70, marginBottom: 10 }} />
+          style={{ width: '100%', padding: '11px 12px', borderRadius: 11, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 14, resize: 'none', height: 70, marginBottom: 10 }} />
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onCancel} style={{ flex: 1, padding: 11, borderRadius: 11, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-soft)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
           <button onClick={onSave} style={{ flex: 1, padding: 11, borderRadius: 11, background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>Save</button>
@@ -132,7 +133,7 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
   }
 
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--border)', overflow: 'hidden' }}>
       {/* Photo header */}
       {place.photo && (
         <img src={place.photo} alt={place.name} style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />

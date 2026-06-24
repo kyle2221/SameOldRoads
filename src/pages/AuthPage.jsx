@@ -5,7 +5,7 @@ import NodeBackground from '../components/NodeBackground'
 const inputStyle = {
   width: '100%', padding: '14px 16px', borderRadius: 14, fontSize: 16,
   border: '1.5px solid #e8e8e8', background: '#fafafa', color: '#0e0e10',
-  outline: 'none', marginBottom: 12, WebkitAppearance: 'none', appearance: 'none',
+  marginBottom: 12, WebkitAppearance: 'none', appearance: 'none',
 }
 
 const btnPrimary = {
@@ -139,6 +139,7 @@ export default function AuthPage({ onAuth }) {
           <>
             {mode === 'signup' && (
               <input
+                className="input-field"
                 style={inputStyle}
                 placeholder="Your name"
                 value={name}
@@ -147,6 +148,7 @@ export default function AuthPage({ onAuth }) {
               />
             )}
             <input
+              className="input-field"
               style={inputStyle}
               type="email"
               placeholder="Email address"
@@ -156,6 +158,7 @@ export default function AuthPage({ onAuth }) {
               inputMode="email"
             />
             <input
+              className="input-field"
               style={{ ...inputStyle, marginBottom: 16 }}
               type="password"
               placeholder="Password"
