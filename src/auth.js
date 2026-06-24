@@ -2,6 +2,8 @@
 // To add real OAuth, wire up Firebase in src/firebase.js and replace
 // signInWithGoogle / signInWithApple implementations.
 
+import { uid } from './utils/uid'
+
 const SESSION_KEY = 'sor_session'
 const USERS_KEY = 'sor_users'
 
@@ -28,7 +30,7 @@ export async function signUpWithEmail(email, password, name) {
   if (!key || !password) throw new Error('Email and password are required.')
   if (password.length < 6) throw new Error('Password must be at least 6 characters.')
   if (users[key]) throw new Error('An account already exists with that email.')
-  const user = { id: crypto.randomUUID(), email: key, name: (name || key.split('@')[0]).trim(), pw: btoa(unescape(encodeURIComponent(password))), provider: 'email', createdAt: Date.now() }
+  const user = { id: uid(), email: key, name: (name || key.split('@')[0]).trim(), pw: btoa(unescape(encodeURIComponent(password))), provider: 'email', createdAt: Date.now() }
   users[key] = user
   setUsers(users)
   return storeSession({ id: user.id, email: user.email, name: user.name, provider: 'email' })

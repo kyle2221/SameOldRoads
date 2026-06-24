@@ -1,6 +1,8 @@
 // Fetches Google place reviews via the /api/reviews Vercel proxy.
 // Results are cached in sessionStorage to avoid repeat calls.
 
+import { timeoutSignal } from './timeout'
+
 const CACHE_PREFIX = 'sor_review_'
 
 export async function fetchPlaceReviews(name, lat, lng) {
@@ -13,7 +15,7 @@ export async function fetchPlaceReviews(name, lat, lng) {
     if (lat != null) params.set('lat', lat)
     if (lng != null) params.set('lng', lng)
 
-    const r = await fetch(`/api/reviews?${params}`, { signal: AbortSignal.timeout(10000) })
+    const r = await fetch(`/api/reviews?${params}`, { signal: timeoutSignal(10000) })
     if (!r.ok) return null
     const data = await r.json()
     if (data.error) return null

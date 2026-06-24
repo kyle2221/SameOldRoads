@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import * as db from './db'
 import { SAMPLE_ROUTES, SAMPLE_TRIPS, SAMPLE_TRIP_PLACES } from './utils/sampleData'
 import { getCurrentUser, signOut } from './auth'
+import { uid } from './utils/uid'
 
 export const useStore = create((set, get) => ({
   currentUser: getCurrentUser(),
@@ -45,7 +46,7 @@ export const useStore = create((set, get) => ({
 
   startTrip: async (name) => {
     const trip = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name,
       createdAt: Date.now(),
       path: [],

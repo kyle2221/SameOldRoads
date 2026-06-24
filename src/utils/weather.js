@@ -1,3 +1,5 @@
+import { timeoutSignal } from './timeout'
+
 const WMO = {
   0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
   45: '🌫️', 48: '🌫️',
@@ -11,7 +13,7 @@ const WMO = {
 export async function getWeather(lat, lng) {
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,weathercode,windspeed_10m&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto`
-    const r = await fetch(url, { signal: AbortSignal.timeout(6000) })
+    const r = await fetch(url, { signal: timeoutSignal(6000) })
     if (!r.ok) return null
     const { current: c } = await r.json()
     return {

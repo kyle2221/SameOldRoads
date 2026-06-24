@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
+import { uid } from '../utils/uid'
 import { IconRoad, IconUtensils, IconPin, IconClock, IconFlag } from '../components/Icons'
 
 export default function RoutesPage() {
@@ -17,7 +18,7 @@ export default function RoutesPage() {
   async function handleCreateFromTrip(trip) {
     const tripPlaces = places.filter(p => p.tripId === trip.id)
     await saveOwnRoute({
-      id: crypto.randomUUID(),
+      id: uid(),
       name: trip.name,
       author: 'You',
       description: '',

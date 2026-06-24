@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
+import { uid } from '../utils/uid'
 import {
   IconClock, IconZap, IconUtensils, IconPin, IconShare, IconCheck, IconTrash,
 } from '../components/Icons'
@@ -136,9 +137,25 @@ async function handleShare(trip, places) {
 
   if (navigator.share) {
     await navigator.share({ title: trip.name, text: lines }).catch(() => {})
-  } else {
+  } else if (navigator.clipboard?.writeText) {
+    // navigator.clipboard is undefined in non-secure (http) contexts
     await navigator.clipboard.writeText(lines).catch(() => {})
     alert('Trip summary copied to clipboard!')
+  } else {
+    // Last-resort copy for http/LAN: a hidden textarea + execCommand
+    try {
+      const ta = document.createElement('textarea')
+      ta.value = lines
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      alert('Trip summary copied to clipboard!')
+    } catch {
+      alert(lines)
+    }
   }
 }
 
@@ -150,7 +167,7 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
   async function handleSaveAsRoute() {
     setSaving(true)
     await onSaveRoute({
-      id: crypto.randomUUID(),
+      id: uid(),
       name: trip.name,
       author: 'You',
       description: '',

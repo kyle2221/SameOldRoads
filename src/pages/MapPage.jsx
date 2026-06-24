@@ -4,6 +4,7 @@ import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
 import { routeAlongRoads } from '../utils/routing'
 import { getWeather } from '../utils/weather'
 import { geocodeSearch } from '../utils/geocode'
+import { uid } from '../utils/uid'
 import { IconCar, IconSearch, IconPin, IconCamera, IconUtensils, IconX } from '../components/Icons'
 
 export default function MapPage() {
@@ -33,7 +34,13 @@ export default function MapPage() {
 
   useEffect(() => {
     if (mapInstanceRef.current) return
+    // `cancelled` guards against React StrictMode's double-mount: the leaflet
+    // import is async, so a second effect invocation can fire before the first
+    // resolves. Without this both would call L.map() on the same node and throw
+    // "Map container is already initialized."
+    let cancelled = false
     import('leaflet').then(L => {
+      if (cancelled || mapInstanceRef.current || !mapRef.current) return
       const map = L.default.map(mapRef.current, {
         center: [37.7, -98.5], zoom: 4,
         zoomControl: true, attributionControl: false,
@@ -59,8 +66,15 @@ export default function MapPage() {
       }
     })
     return () => {
+      cancelled = true
       if (roRef.current) { roRef.current.disconnect(); roRef.current = null }
-      if (watchIdRef.current) navigator.geolocation.clearWatch(watchIdRef.current)
+      if (watchIdRef.current) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null }
+      // Fully tear down the map so a remount starts clean (no leaked instance).
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
+      pathLayerRef.current = null
+      routeLayerRef.current = null
+      markersRef.current = []
+      userMarkerRef.current = null
     }
   }, [])
 
@@ -212,7 +226,7 @@ export default function MapPage() {
   async function handleSavePlace() {
     if (!newPlace.name.trim() || !pendingLatLng) return
     const place = {
-      id: crypto.randomUUID(),
+      id: uid(),
       ...newPlace,
       lat: pendingLatLng.lat,
       lng: pendingLatLng.lng,
