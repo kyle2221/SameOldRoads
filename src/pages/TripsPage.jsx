@@ -5,7 +5,7 @@ import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
 import { uid } from '../utils/uid'
 import {
-  IconClock, IconZap, IconUtensils, IconPin, IconShare, IconCheck, IconTrash,
+  IconCar, IconClock, IconZap, IconUtensils, IconPin, IconShare, IconCheck, IconTrash,
 } from '../components/Icons'
 
 export default function TripsPage() {
