@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate } from '../utils/format'
 import NodeBackground from '../components/NodeBackground'
+import RouteThumb from '../components/RouteThumb'
 
 function getTimeGreeting() {
   const h = new Date().getHours()
@@ -26,6 +27,16 @@ export default function HomePage() {
   const [greetText, greetIcon] = getTimeGreeting()
 
   const featuredRoutes = routes.filter(r => !r.isOwn)
+
+  const totalMiles = totalDist / 1609.34
+  const achievements = [
+    { icon: '🏁', label: 'First Trip', sub: 'Hit the road', unlocked: trips.length >= 1 },
+    { icon: '🧭', label: 'Trailblazer', sub: '3 trips', unlocked: trips.length >= 3 },
+    { icon: '🛣️', label: 'Century', sub: '100 miles', unlocked: totalMiles >= 100 },
+    { icon: '🍽️', label: 'Foodie', sub: '3 eats', unlocked: restaurants.length >= 3 },
+    { icon: '⭐', label: 'Explorer', sub: '5 spots', unlocked: places.length >= 5 },
+  ]
+  const unlockedCount = achievements.filter(a => a.unlocked).length
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
@@ -154,6 +165,19 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Achievements */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0 16px', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Achievements</div>
+          <div style={{ fontSize: 12, color: 'var(--orange-deep)', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>{unlockedCount}/{achievements.length}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '0 16px 4px' }}>
+          {achievements.map(a => (
+            <Badge key={a.label} {...a} />
+          ))}
+        </div>
+      </div>
+
       {/* Featured Routes */}
       {featuredRoutes.length > 0 && (
         <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
@@ -212,6 +236,22 @@ function QuickBtn({ icon, label, sub, onClick, accent }) {
   )
 }
 
+function Badge({ icon, label, sub, unlocked }) {
+  return (
+    <div style={{
+      minWidth: 92, flexShrink: 0, borderRadius: 18, padding: '14px 10px 12px',
+      textAlign: 'center',
+      background: unlocked ? 'linear-gradient(160deg, #fff4ec, #ffe6d4)' : 'var(--surface)',
+      border: `1px solid ${unlocked ? 'var(--orange-tint)' : 'var(--border)'}`,
+      opacity: unlocked ? 1 : 0.55,
+    }}>
+      <div style={{ fontSize: 26, marginBottom: 5, filter: unlocked ? 'none' : 'grayscale(1)' }}>{unlocked ? icon : '🔒'}</div>
+      <div style={{ fontSize: 12, fontWeight: 800, color: unlocked ? 'var(--orange-deep)' : 'var(--text-mute)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.4, lineHeight: 1.1 }}>{label}</div>
+      <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-mute)', marginTop: 2, letterSpacing: 0.3 }}>{sub}</div>
+    </div>
+  )
+}
+
 function Section({ title, action, onAction, children }) {
   return (
     <div style={{ marginBottom: 28 }}>
@@ -265,14 +305,12 @@ function TripRow({ trip, last, places }) {
   const stops = places.filter(p => p.tripId === trip.id)
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', padding: '14px 16px',
+      display: 'flex', alignItems: 'center', padding: '12px 16px',
       borderBottom: last ? 'none' : '1px solid var(--border-soft)', gap: 13,
     }}>
-      <div style={{
-        width: 44, height: 44, borderRadius: 14,
-        background: 'linear-gradient(145deg, #fff1e8, #ffe0cc)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
-      }}>🚗</div>
+      <div style={{ width: 56, height: 44, borderRadius: 12, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border)' }}>
+        <RouteThumb path={trip.path} height={44} />
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
         <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2 }}>

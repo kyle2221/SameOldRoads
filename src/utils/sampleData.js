@@ -90,3 +90,74 @@ export const SAMPLE_ROUTES = [
     ],
   },
 ]
+
+const DAY = 86400000
+
+// Completed trips seeded once on first launch so the Logbook and Home feel
+// alive out of the box. Each carries a real GPS-ish path (for the route
+// thumbnails + map), realistic stats, and saved stops.
+export const SAMPLE_TRIPS = [
+  {
+    id: 'trip-demo-1',
+    name: 'Big Sur Coast Run',
+    createdAt: Date.now() - DAY * 4,
+    startTime: Date.now() - DAY * 4,
+    endTime: Date.now() - DAY * 4 + 11700000,
+    distance: 178400,
+    duration: 11700000,
+    avgSpeed: 15.2,
+    maxSpeed: 27.4,
+    path: [
+      { lat: 36.2704, lng: -121.8081 }, { lat: 36.22, lng: -121.78 },
+      { lat: 36.15, lng: -121.67 }, { lat: 36.10, lng: -121.62 },
+      { lat: 35.97, lng: -121.50 }, { lat: 35.88, lng: -121.43 },
+      { lat: 35.78, lng: -121.32 }, { lat: 35.66, lng: -121.25 },
+      { lat: 35.57, lng: -121.13 }, { lat: 35.45, lng: -120.95 },
+      { lat: 35.37, lng: -120.85 },
+    ],
+  },
+  {
+    id: 'trip-demo-2',
+    name: 'Smoky Mountain Loop',
+    createdAt: Date.now() - DAY * 12,
+    startTime: Date.now() - DAY * 12,
+    endTime: Date.now() - DAY * 12 + 7500000,
+    distance: 96200,
+    duration: 7500000,
+    avgSpeed: 12.8,
+    maxSpeed: 22.1,
+    path: [
+      { lat: 35.6118, lng: -83.4895 }, { lat: 35.65, lng: -83.52 },
+      { lat: 35.68, lng: -83.56 }, { lat: 35.71, lng: -83.50 },
+      { lat: 35.70, lng: -83.42 }, { lat: 35.66, lng: -83.38 },
+      { lat: 35.60, lng: -83.40 }, { lat: 35.58, lng: -83.46 },
+      { lat: 35.6118, lng: -83.4895 },
+    ],
+  },
+  {
+    id: 'trip-demo-3',
+    name: 'Desert Sunset Drive',
+    createdAt: Date.now() - DAY * 1,
+    startTime: Date.now() - DAY * 1,
+    endTime: Date.now() - DAY * 1 + 5400000,
+    distance: 61800,
+    duration: 5400000,
+    avgSpeed: 18.6,
+    maxSpeed: 31.2,
+    path: [
+      { lat: 33.8734, lng: -115.9010 }, { lat: 33.92, lng: -115.95 },
+      { lat: 33.98, lng: -116.02 }, { lat: 34.03, lng: -116.10 },
+      { lat: 34.08, lng: -116.18 }, { lat: 34.13, lng: -116.31 },
+    ],
+  },
+]
+
+export const SAMPLE_TRIP_PLACES = [
+  { id: 'tp-1-1', type: 'restaurant', name: 'Nepenthe', lat: 36.2704, lng: -121.8081, notes: 'Ambrosia burger right on the cliff edge. Worth the wait.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4 },
+  { id: 'tp-1-2', type: 'destination', name: 'McWay Falls', lat: 36.1577, lng: -121.6716, notes: '80ft waterfall dropping straight onto the beach.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4 },
+  { id: 'tp-1-3', type: 'destination', name: 'Elephant Seal Vista', lat: 35.6602, lng: -121.2549, notes: 'Hundreds of seals just lounging. Surreal.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4 },
+  { id: 'tp-2-1', type: 'destination', name: 'Clingmans Dome', lat: 35.5628, lng: -83.4985, notes: 'Highest point in the Smokies — 360° tower view.', tripId: 'trip-demo-2', createdAt: Date.now() - DAY * 12 },
+  { id: 'tp-2-2', type: 'restaurant', name: 'The Andrews Bald Picnic', lat: 35.5556, lng: -83.4944, notes: 'Packed sandwiches on the grassy bald. Perfect.', tripId: 'trip-demo-2', createdAt: Date.now() - DAY * 12 },
+  { id: 'tp-3-1', type: 'destination', name: 'Cholla Cactus Garden', lat: 33.9270, lng: -115.9267, notes: 'Glowing gold at golden hour. Bring a tripod.', tripId: 'trip-demo-3', createdAt: Date.now() - DAY * 1 },
+  { id: 'tp-3-2', type: 'destination', name: 'Keys View', lat: 33.9266, lng: -116.1869, notes: 'See the Salton Sea and San Andreas Fault from up top.', tripId: 'trip-demo-3', createdAt: Date.now() - DAY * 1 },
+]

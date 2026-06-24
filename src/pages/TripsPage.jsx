@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import RouteMap from '../components/RouteMap'
+import RouteThumb from '../components/RouteThumb'
 
 export default function TripsPage() {
   const { trips, places, deleteTrip, saveOwnRoute } = useStore()
@@ -49,28 +50,32 @@ export default function TripsPage() {
               className="pressable"
               onClick={() => setSelected(trip.id)}
               style={{
-                background: 'var(--surface)', borderRadius: 20, marginBottom: 13,
+                background: 'var(--surface)', borderRadius: 20, marginBottom: 14,
                 border: '1px solid var(--border)', overflow: 'hidden',
-                display: 'flex',
               }}
             >
-              {/* Left accent stripe */}
-              <div style={{ width: 5, flexShrink: 0, background: 'linear-gradient(180deg, #ff8a52, #ef5616)' }} />
-              <div style={{ flex: 1, padding: '15px 15px 13px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2 }}>{formatDate(trip.createdAt)}</div>
-                  </div>
-                  <div style={{ textAlign: 'right', marginLeft: 12, flexShrink: 0 }}>
-                    <div style={{ fontSize: 21, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.3, fontFamily: "'Rajdhani', sans-serif" }}>{formatDistance(trip.distance || 0)}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 1 }}>{formatDuration(trip.duration || 0)}</div>
-                  </div>
+              {/* Route thumbnail header with overlaid name + distance */}
+              <div style={{ position: 'relative' }}>
+                <RouteThumb path={trip.path} height={112} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 40%, rgba(10,4,0,0.62) 100%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '4px 10px', border: '1px solid rgba(255,255,255,0.14)' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: "'Rajdhani', sans-serif", letterSpacing: 0.2 }}>{formatDistance(trip.distance || 0)}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 7 }}>
-                  <Chip label={`${rCount} restaurants`} icon="🍽️" />
-                  <Chip label={`${dCount} spots`} icon="📍" />
+                <div style={{ position: 'absolute', left: 14, bottom: 10, right: 14 }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: -0.2, lineHeight: 1.05, textShadow: '0 1px 8px rgba(0,0,0,0.6)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 1, fontWeight: 600 }}>{formatDate(trip.createdAt)}</div>
                 </div>
+              </div>
+              {/* Stats footer */}
+              <div style={{ display: 'flex', alignItems: 'center', padding: '11px 14px', gap: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700, fontFamily: "'Rajdhani', sans-serif", letterSpacing: 0.3 }}>⏱ {formatDuration(trip.duration || 0)}</span>
+                {trip.avgSpeed ? (
+                  <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700, fontFamily: "'Rajdhani', sans-serif", letterSpacing: 0.3 }}>⚡ {formatSpeed(trip.avgSpeed)}</span>
+                ) : null}
+                <div style={{ flex: 1 }} />
+                {rCount > 0 && <Chip label={rCount} icon="🍽️" />}
+                {dCount > 0 && <Chip label={dCount} icon="📍" />}
+                <span style={{ color: 'var(--text-mute)', fontSize: 18, marginLeft: 2 }}>›</span>
               </div>
             </div>
           )

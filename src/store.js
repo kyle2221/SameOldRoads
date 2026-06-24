@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import * as db from './db'
-import { SAMPLE_ROUTES } from './utils/sampleData'
+import { SAMPLE_ROUTES, SAMPLE_TRIPS, SAMPLE_TRIP_PLACES } from './utils/sampleData'
 import { getCurrentUser, signOut } from './auth'
 
 export const useStore = create((set, get) => ({
@@ -19,18 +19,26 @@ export const useStore = create((set, get) => ({
   logout: () => { signOut(); set({ currentUser: null, trips: [], places: [], routes: [], activeTrip: null, trackingActive: false, currentPath: [] }) },
 
   loadAll: async () => {
+    // One-time demo seed: sample routes + completed trips + their stops, so a
+    // first-run user lands on a populated app. Guarded by a flag so that once a
+    // user deletes a seeded trip it does not silently reappear.
+    const seeded = await db.getSetting('demoSeeded')
+    if (!seeded) {
+      const existingRoutes = await db.getAllRoutes()
+      if (existingRoutes.length === 0) {
+        for (const r of SAMPLE_ROUTES) await db.saveRoute(r)
+      }
+      for (const t of SAMPLE_TRIPS) await db.saveTrip(t)
+      for (const p of SAMPLE_TRIP_PLACES) await db.savePlace(p)
+      await db.setSetting('demoSeeded', true)
+    }
+
     const [trips, places, routes] = await Promise.all([
       db.getAllTrips(),
       db.getAllPlaces(),
       db.getAllRoutes(),
     ])
-    // seed sample routes if none
-    let finalRoutes = routes
-    if (routes.length === 0) {
-      for (const r of SAMPLE_ROUTES) await db.saveRoute(r)
-      finalRoutes = SAMPLE_ROUTES
-    }
-    set({ trips, places, routes: finalRoutes })
+    set({ trips, places, routes })
   },
 
   setTab: (tab) => set({ activeTab: tab }),
