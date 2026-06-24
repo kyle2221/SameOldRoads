@@ -5,19 +5,29 @@ import { routeAlongRoads } from '../utils/routing'
 import { getWeather } from '../utils/weather'
 import { geocodeSearch } from '../utils/geocode'
 import { uid } from '../utils/uid'
-import { IconCar, IconSearch, IconPin, IconCamera, IconUtensils, IconX } from '../components/Icons'
+import {
+  IconCar, IconSearch, IconPin, IconCamera, IconUtensils, IconX,
+  IconRoad, IconCheck, IconTrash,
+} from '../components/Icons'
 
 export default function MapPage() {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const pathLayerRef = useRef(null)
   const routeLayerRef = useRef(null)
+  const drawLayerRef = useRef(null)   // route-creator overlay
   const markersRef = useRef([])
+  const drawMarkersRef = useRef([])   // route-creator waypoint markers
   const userMarkerRef = useRef(null)
   const watchIdRef = useRef(null)
   const roRef = useRef(null)
 
-  const { trackingActive, currentPath, activeTrip, startTrip, appendPathPoint, stopTrip, places, followingRoute, stopFollowing, addPlace } = useStore()
+  const {
+    trackingActive, currentPath, activeTrip, startTrip, appendPathPoint, stopTrip,
+    places, followingRoute, stopFollowing, addPlace,
+    flyToPlace, setFlyToPlace, setTab, saveOwnRoute,
+  } = useStore()
+
   const [elapsed, setElapsed] = useState(0)
   const [currentSpeed, setCurrentSpeed] = useState(0)
   const [weather, setWeather] = useState(null)
@@ -32,12 +42,17 @@ export default function MapPage() {
   const [searchLoading, setSearchLoading] = useState(false)
   const searchTimerRef = useRef(null)
 
+  // Route creator state
+  const [drawMode, setDrawMode] = useState(false)
+  const [drawWaypoints, setDrawWaypoints] = useState([])   // [{lat,lng}]
+  const [drawSnapped, setDrawSnapped] = useState([])        // [[lat,lng]] snapped line
+  const [drawSnapping, setDrawSnapping] = useState(false)
+  const [showSaveRoute, setShowSaveRoute] = useState(false)
+  const [newRouteName, setNewRouteName] = useState('')
+
+  // Map init
   useEffect(() => {
     if (mapInstanceRef.current) return
-    // `cancelled` guards against React StrictMode's double-mount: the leaflet
-    // import is async, so a second effect invocation can fire before the first
-    // resolves. Without this both would call L.map() on the same node and throw
-    // "Map container is already initialized."
     let cancelled = false
     import('leaflet').then(L => {
       if (cancelled || mapInstanceRef.current || !mapRef.current) return
@@ -47,14 +62,20 @@ export default function MapPage() {
       })
       L.default.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
       map.on('click', (e) => {
-        if (!trackingActive) return
+        // drawMode is read from a ref so the closure stays fresh
+        if (drawModeRef.current) {
+          addDrawWaypoint(e.latlng, L.default)
+          return
+        }
+        if (!trackingActiveRef.current) return
         setPendingLatLng(e.latlng)
         setShowAddPlace(true)
       })
       mapInstanceRef.current = map
       pathLayerRef.current = L.default.polyline([], {
-        color: '#ff6a2b', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round',
+        color: '#fc4c02', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round',
       }).addTo(map)
+      drawLayerRef.current = L.default.featureGroup().addTo(map)
       if ('ResizeObserver' in window) {
         roRef.current = new ResizeObserver(() => {
           map.invalidateSize()
@@ -69,14 +90,21 @@ export default function MapPage() {
       cancelled = true
       if (roRef.current) { roRef.current.disconnect(); roRef.current = null }
       if (watchIdRef.current) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null }
-      // Fully tear down the map so a remount starts clean (no leaked instance).
       if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null }
       pathLayerRef.current = null
       routeLayerRef.current = null
+      drawLayerRef.current = null
       markersRef.current = []
+      drawMarkersRef.current = []
       userMarkerRef.current = null
     }
   }, [])
+
+  // Refs so map click handler can read latest state without re-registering
+  const drawModeRef = useRef(false)
+  const trackingActiveRef = useRef(trackingActive)
+  useEffect(() => { drawModeRef.current = drawMode }, [drawMode])
+  useEffect(() => { trackingActiveRef.current = trackingActive }, [trackingActive])
 
   // Live tracking polyline
   useEffect(() => {
@@ -95,8 +123,8 @@ export default function MapPage() {
         if (cancelled || !mapInstanceRef.current) return
         if (routeLayerRef.current) { routeLayerRef.current.remove(); routeLayerRef.current = null }
         const group = L.default.featureGroup()
-        L.default.polyline(latlngs, { color: '#ff6a2b', weight: 12, opacity: 0.18, lineJoin: 'round', lineCap: 'round' }).addTo(group)
-        L.default.polyline(latlngs, { color: '#ff6a2b', weight: 5, opacity: 1, lineJoin: 'round', lineCap: 'round' }).addTo(group)
+        L.default.polyline(latlngs, { color: '#fc4c02', weight: 12, opacity: 0.18, lineJoin: 'round', lineCap: 'round' }).addTo(group)
+        L.default.polyline(latlngs, { color: '#fc4c02', weight: 5, opacity: 1, lineJoin: 'round', lineCap: 'round' }).addTo(group)
         followingRoute.places?.forEach(pl => {
           const icon = pl.type === 'restaurant' ? '🍽️' : '📍'
           L.default.marker([pl.lat, pl.lng], {
@@ -134,6 +162,122 @@ export default function MapPage() {
     })
   }, [places])
 
+  // Fly to place (from Places page "Show on Map")
+  useEffect(() => {
+    if (!flyToPlace || !mapInstanceRef.current) return
+    const { lat, lng, name } = flyToPlace
+    mapInstanceRef.current.setView([lat, lng], 15, { animate: true, duration: 1 })
+    // Open the matching marker popup
+    import('leaflet').then(() => {
+      const m = markersRef.current.find((_, i) => {
+        const pl = places[i]
+        return pl && pl.name === name
+      })
+      if (m) m.openPopup()
+    })
+    setFlyToPlace(null)
+  }, [flyToPlace, places, setFlyToPlace])
+
+  // Draw layer: redraw whenever waypoints / snapped line changes
+  useEffect(() => {
+    if (!drawLayerRef.current) return
+    import('leaflet').then(L => {
+      drawLayerRef.current.clearLayers()
+      drawMarkersRef.current = []
+      if (!drawMode && drawWaypoints.length === 0) return
+
+      // Draw snapped/straight line
+      const line = drawSnapped.length >= 2
+        ? drawSnapped
+        : drawWaypoints.map(p => [p.lat, p.lng])
+      if (line.length >= 2) {
+        L.default.polyline(line, { color: '#fc4c02', weight: 5, opacity: 0.9, dashArray: drawSnapping ? '8,8' : null }).addTo(drawLayerRef.current)
+      }
+
+      // Waypoint markers
+      drawWaypoints.forEach((wp, i) => {
+        const isFirst = i === 0
+        const isLast = i === drawWaypoints.length - 1
+        const color = isFirst ? '#22c55e' : isLast ? '#fc4c02' : '#fff'
+        const m = L.default.marker([wp.lat, wp.lng], {
+          icon: L.default.divIcon({
+            html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:3px solid #222;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
+            iconSize: [14, 14], iconAnchor: [7, 7], className: '',
+          }),
+          draggable: false,
+        }).addTo(drawLayerRef.current)
+        drawMarkersRef.current.push(m)
+      })
+    })
+  }, [drawMode, drawWaypoints, drawSnapped, drawSnapping])
+
+  const addDrawWaypoint = async (latlng, L) => {
+    const wp = { lat: latlng.lat, lng: latlng.lng }
+    setDrawWaypoints(prev => {
+      const next = [...prev, wp]
+      if (next.length >= 2) {
+        // Snap the segment between last two points
+        setDrawSnapping(true)
+        routeAlongRoads(next).then(snapped => {
+          setDrawSnapped(snapped)
+          setDrawSnapping(false)
+        })
+      }
+      return next
+    })
+  }
+
+  function cancelDraw() {
+    setDrawMode(false)
+    setDrawWaypoints([])
+    setDrawSnapped([])
+    setDrawSnapping(false)
+    setShowSaveRoute(false)
+    setNewRouteName('')
+  }
+
+  function undoLastWaypoint() {
+    setDrawWaypoints(prev => {
+      const next = prev.slice(0, -1)
+      if (next.length >= 2) {
+        setDrawSnapping(true)
+        routeAlongRoads(next).then(snapped => {
+          setDrawSnapped(snapped)
+          setDrawSnapping(false)
+        })
+      } else {
+        setDrawSnapped([])
+      }
+      return next
+    })
+  }
+
+  async function saveDrawnRoute() {
+    if (!newRouteName.trim() || drawWaypoints.length < 2) return
+    const path = (drawSnapped.length >= 2 ? drawSnapped : drawWaypoints.map(p => [p.lat, p.lng]))
+      .map(([lat, lng]) => ({ lat, lng }))
+
+    // Compute approximate distance
+    let dist = 0
+    for (let i = 1; i < path.length; i++) dist += haversineMeters(path[i - 1], path[i])
+
+    await saveOwnRoute({
+      id: uid(),
+      name: newRouteName.trim(),
+      author: 'You',
+      description: '',
+      distance: dist,
+      duration: 0,
+      coverColor: '#fc4c02',
+      createdAt: Date.now(),
+      isOwn: true,
+      path,
+      places: [],
+    })
+    cancelDraw()
+    setTab('routes')
+  }
+
   // Elapsed timer
   useEffect(() => {
     if (!trackingActive || !activeTrip) { setElapsed(0); return }
@@ -160,7 +304,7 @@ export default function MapPage() {
       if (!userMarkerRef.current) {
         userMarkerRef.current = L.default.marker([latlng.lat, latlng.lng], {
           icon: L.default.divIcon({
-            html: `<div style="width:16px;height:16px;border-radius:50%;background:#4287f5;border:3px solid #fff;box-shadow:0 0 0 4px rgba(66,135,245,0.25),0 2px 8px rgba(0,0,0,0.3)"></div>`,
+            html: `<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 4px rgba(59,130,246,0.3),0 2px 8px rgba(0,0,0,0.3)"></div>`,
             iconSize: [16, 16], iconAnchor: [8, 8], className: '',
           }),
           zIndexOffset: 500,
@@ -182,7 +326,6 @@ export default function MapPage() {
         appendPathPoint(latlng)
         updateUserDot(latlng)
         mapInstanceRef.current?.setView([latlng.lat, latlng.lng], 15)
-        // Fetch weather once on first fix
         if (!weather) getWeather(latlng.lat, latlng.lng).then(w => w && setWeather(w))
       },
       err => console.warn(err),
@@ -244,15 +387,20 @@ export default function MapPage() {
     mapInstanceRef.current?.setView([lat, lng], 14)
   }
 
+  const drawDist = drawSnapped.length >= 2
+    ? drawSnapped.reduce((d, p, i) => i === 0 ? 0 : d + haversineMeters({ lat: drawSnapped[i-1][0], lng: drawSnapped[i-1][1] }, { lat: p[0], lng: p[1] }), 0)
+    : 0
+
   return (
     <div style={{ position: 'relative', height: '100%' }}>
       <style>{`
         @keyframes recPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.75)} }
+        .leaflet-container { cursor: ${drawMode ? 'crosshair' : 'grab'} !important; }
       `}</style>
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
 
-      {/* Search bar — shown when not tracking */}
-      {!trackingActive && (
+      {/* Search bar — shown when not tracking and not drawing */}
+      {!trackingActive && !drawMode && (
         <div style={{ position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000 }}>
           <div style={{
             background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(18px)',
@@ -267,11 +415,7 @@ export default function MapPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search places, cities, roads..."
-                style={{
-                  flex: 1, border: 'none', fontSize: 15,
-                  background: 'transparent', color: 'var(--text)',
-                  fontFamily: "'Rajdhani', sans-serif", fontWeight: 500,
-                }}
+                style={{ flex: 1, border: 'none', fontSize: 15, background: 'transparent', color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", fontWeight: 500 }}
               />
               {(search || searchLoading) && (
                 <button onClick={() => { setSearch(''); setSearchResults([]) }}
@@ -301,10 +445,9 @@ export default function MapPage() {
       {/* Tracking HUD */}
       {trackingActive && (
         <div style={{ position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000 }}>
-          {/* Top row: trip name + weather */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingLeft: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'block', animation: 'recPulse 1.4s ease-in-out infinite', boxShadow: '0 0 6px rgba(255,59,48,0.6)' }} />
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'block', animation: 'recPulse 1.4s ease-in-out infinite', boxShadow: '0 0 6px rgba(239,68,68,0.6)' }} />
               <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1, textShadow: '0 1px 4px rgba(0,0,0,0.5)', textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{activeTrip?.name}</span>
             </div>
             {weather && (
@@ -314,27 +457,71 @@ export default function MapPage() {
               </div>
             )}
           </div>
-          {/* Stats row */}
           <div style={{
-            background: 'rgba(14,8,4,0.86)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+            background: 'rgba(14,8,4,0.88)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
             borderRadius: 22, padding: '14px 16px',
-            border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center',
           }}>
             <HudStat label="Duration" value={formatDuration(elapsed)} />
-            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)', margin: '0 12px' }} />
+            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 12px' }} />
             <HudStat label="Distance" value={formatDistance(activeTrip?.distance || 0)} orange />
-            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.1)', margin: '0 12px' }} />
+            <div style={{ width: 1, height: 32, background: 'rgba(255,255,255,0.08)', margin: '0 12px' }} />
             <HudStat label="Speed" value={formatSpeed(currentSpeed)} />
             <div style={{ display: 'flex', gap: 7, marginLeft: 'auto', paddingLeft: 10 }}>
               <button
                 onClick={() => { setPendingLatLng(userPos || { lat: 0, lng: 0 }); setShowAddPlace(true) }}
-                style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               ><IconPin size={18} color="#fff" sw={2} /></button>
               <button
                 onClick={handleStop}
-                style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg, #ff4444, #cc0000)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(204,0,0,0.4)' }}
+                style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg, #ef4444, #b91c1c)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(185,28,28,0.5)' }}
               >■</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draw mode HUD */}
+      {drawMode && (
+        <div style={{ position: 'absolute', top: 16, left: 16, right: 16, zIndex: 1000 }}>
+          <div style={{
+            background: 'rgba(14,8,4,0.92)', backdropFilter: 'blur(18px)',
+            borderRadius: 20, padding: '14px 16px',
+            border: '1px solid rgba(252,76,2,0.3)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div>
+                <div style={{ fontSize: 9, color: 'rgba(252,76,2,0.7)', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginBottom: 2 }}>Route Creator</div>
+                <div style={{ fontSize: 13, color: '#fff', fontWeight: 600, fontFamily: "'Rajdhani', sans-serif" }}>
+                  {drawWaypoints.length === 0
+                    ? 'Tap the map to place waypoints'
+                    : drawSnapping
+                      ? 'Snapping to roads…'
+                      : `${drawWaypoints.length} point${drawWaypoints.length > 1 ? 's' : ''} · ${formatDistance(drawDist)}`}
+                </div>
+              </div>
+              <button onClick={cancelDraw} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, color: 'rgba(255,255,255,0.7)', width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconX size={14} color="rgba(255,255,255,0.7)" sw={2} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={undoLastWaypoint}
+                disabled={drawWaypoints.length === 0}
+                style={{ flex: 1, padding: '9px 0', borderRadius: 11, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: drawWaypoints.length === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 700, cursor: drawWaypoints.length === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+              >
+                <IconTrash size={13} color={drawWaypoints.length === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.8)'} sw={2} />
+                Undo
+              </button>
+              <button
+                onClick={() => setShowSaveRoute(true)}
+                disabled={drawWaypoints.length < 2}
+                style={{ flex: 2, padding: '9px 0', borderRadius: 11, background: drawWaypoints.length >= 2 ? 'linear-gradient(135deg, #ff8a52, #fc4c02)' : 'rgba(255,255,255,0.06)', border: 'none', color: drawWaypoints.length >= 2 ? '#fff' : 'rgba(255,255,255,0.25)', fontSize: 13, fontWeight: 700, cursor: drawWaypoints.length >= 2 ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxShadow: drawWaypoints.length >= 2 ? '0 4px 14px rgba(252,76,2,0.4)' : 'none' }}
+              >
+                <IconCheck size={13} color={drawWaypoints.length >= 2 ? '#fff' : 'rgba(255,255,255,0.25)'} sw={2.5} />
+                Save Route
+              </button>
             </div>
           </div>
         </div>
@@ -344,39 +531,52 @@ export default function MapPage() {
       {followingRoute && (
         <div style={{
           position: 'absolute', bottom: 88, left: 16, right: 16,
-          background: 'rgba(14,8,4,0.86)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
+          background: 'rgba(14,8,4,0.88)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
           borderRadius: 18, padding: '13px 16px',
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: '1px solid rgba(255,255,255,0.08)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 32, height: 4, borderRadius: 4, background: 'linear-gradient(90deg, #ff8a52, #ef5616)', boxShadow: '0 0 8px rgba(255,140,60,0.5)' }} />
+            <div style={{ width: 32, height: 4, borderRadius: 4, background: 'linear-gradient(90deg, #ff8a52, #fc4c02)', boxShadow: '0 0 8px rgba(252,76,2,0.5)' }} />
             <div>
               <div style={{ fontSize: 10, color: 'rgba(255,180,100,0.7)', textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700, marginBottom: 2, fontFamily: "'Rajdhani', sans-serif" }}>Following Route</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.2 }}>{followingRoute.name}</div>
             </div>
           </div>
-          <button onClick={stopFollowing} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 11, color: 'rgba(255,255,255,0.8)', padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={stopFollowing} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 11, color: 'rgba(255,255,255,0.8)', padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
             Stop
           </button>
         </div>
       )}
 
-      {/* Start button */}
-      {!trackingActive && (
-        <button onClick={() => setShowNameModal(true)} style={{
-          position: 'absolute', bottom: 24, left: 20, right: 20,
-          background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none',
-          borderRadius: 20, padding: '17px 0',
-          fontSize: 19, fontWeight: 700, color: '#fff', cursor: 'pointer', zIndex: 1000,
-          boxShadow: '0 8px 28px rgba(239,86,22,0.52)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif",
-        }}>
-          <IconCar size={22} color="#fff" sw={2} />
-          Start a Trip
-        </button>
+      {/* Bottom action buttons — not tracking, not drawing */}
+      {!trackingActive && !drawMode && (
+        <div style={{ position: 'absolute', bottom: 24, left: 20, right: 20, zIndex: 1000, display: 'flex', gap: 10 }}>
+          <button onClick={() => { setDrawMode(true); setDrawWaypoints([]); setDrawSnapped([]) }} style={{
+            flex: 1,
+            background: 'rgba(14,8,4,0.88)', backdropFilter: 'blur(18px)',
+            border: '1px solid rgba(252,76,2,0.35)', borderRadius: 20, padding: '16px 0',
+            fontSize: 15, fontWeight: 700, color: '#fc4c02', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            fontFamily: "'Rajdhani', sans-serif", letterSpacing: 0.5, textTransform: 'uppercase',
+          }}>
+            <IconRoad size={18} color="#fc4c02" sw={2} />
+            Draw Route
+          </button>
+          <button onClick={() => setShowNameModal(true)} style={{
+            flex: 2,
+            background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none',
+            borderRadius: 20, padding: '16px 0',
+            fontSize: 17, fontWeight: 700, color: '#fff', cursor: 'pointer',
+            boxShadow: '0 8px 28px rgba(252,76,2,0.48)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            letterSpacing: 0.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif",
+          }}>
+            <IconCar size={20} color="#fff" sw={2} />
+            Start Trip
+          </button>
+        </div>
       )}
 
       {/* Name modal */}
@@ -392,6 +592,27 @@ export default function MapPage() {
             style={inputStyle}
           />
           <button onClick={handleStart} style={primaryBtn}>Start Tracking</button>
+        </Modal>
+      )}
+
+      {/* Save drawn route modal */}
+      {showSaveRoute && (
+        <Modal title="Save Route" onClose={() => setShowSaveRoute(false)}>
+          <div style={{ fontSize: 13, color: 'var(--text-soft)', marginBottom: 4 }}>
+            {drawWaypoints.length} waypoints · {formatDistance(drawDist)}
+          </div>
+          <input
+            className="input-field"
+            autoFocus
+            placeholder="Route name (e.g. Pacific Coast Loop)"
+            value={newRouteName}
+            onChange={e => setNewRouteName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && saveDrawnRoute()}
+            style={inputStyle}
+          />
+          <button onClick={saveDrawnRoute} disabled={!newRouteName.trim()} style={{ ...primaryBtn, opacity: newRouteName.trim() ? 1 : 0.5 }}>
+            Save Route
+          </button>
         </Modal>
       )}
 
@@ -417,8 +638,6 @@ export default function MapPage() {
           </div>
           <input className="input-field" placeholder="Place name" value={newPlace.name} onChange={e => setNewPlace(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
           <textarea className="input-field" placeholder="Notes (optional)" value={newPlace.notes} onChange={e => setNewPlace(p => ({ ...p, notes: e.target.value }))} style={{ ...inputStyle, height: 68, resize: 'none' }} />
-
-          {/* Photo capture */}
           {newPlace.photo ? (
             <div style={{ position: 'relative' }}>
               <img src={newPlace.photo} alt="Place" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 12 }} />
@@ -439,7 +658,6 @@ export default function MapPage() {
               <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{ display: 'none' }} />
             </label>
           )}
-
           <button onClick={handleSavePlace} style={primaryBtn}>Save Place</button>
         </Modal>
       )}
@@ -450,11 +668,11 @@ export default function MapPage() {
 function HudStat({ label, value, orange }) {
   return (
     <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{label}</div>
+      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700, marginBottom: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{label}</div>
       <div style={{
-        fontSize: 24, fontWeight: 700, letterSpacing: -0.3, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif",
+        fontSize: 22, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1, fontFamily: "'Rajdhani', sans-serif",
         ...(orange ? {
-          background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
+          background: 'linear-gradient(135deg, #ff8a52, #fc4c02)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
         } : { color: '#fff' }),
       }}>{value}</div>
@@ -465,8 +683,8 @@ function HudStat({ label, value, orange }) {
 function Modal({ title, children, onClose }) {
   return (
     <div style={{
-      position: 'absolute', inset: 0, background: 'rgba(20,20,25,0.4)', zIndex: 2000,
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'center', backdropFilter: 'blur(2px)',
+      position: 'absolute', inset: 0, background: 'rgba(10,5,0,0.5)', zIndex: 2000,
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center', backdropFilter: 'blur(3px)',
     }} onClick={onClose}>
       <div style={{
         width: '100%', background: 'var(--surface)', borderRadius: '24px 24px 0 0',
@@ -484,6 +702,16 @@ function Modal({ title, children, onClose }) {
   )
 }
 
+function haversineMeters(a, b) {
+  const R = 6371e3
+  const φ1 = (a.lat * Math.PI) / 180
+  const φ2 = (b.lat * Math.PI) / 180
+  const Δφ = ((b.lat - a.lat) * Math.PI) / 180
+  const Δλ = ((b.lng - a.lng) * Math.PI) / 180
+  const x = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+}
+
 const inputStyle = {
   width: '100%', padding: '13px 14px', borderRadius: 13,
   background: 'var(--surface-2)', border: '1px solid var(--border)',
@@ -492,8 +720,8 @@ const inputStyle = {
 
 const primaryBtn = {
   width: '100%', padding: '14px', borderRadius: 14,
-  background: 'linear-gradient(135deg, #ff8a52, #ef5616)', border: 'none',
+  background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none',
   color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer',
-  boxShadow: '0 6px 18px rgba(239,86,22,0.3)',
+  boxShadow: '0 6px 18px rgba(252,76,2,0.35)',
   fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
 }

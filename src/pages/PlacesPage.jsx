@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store'
-import { IconSearch, IconUtensils, IconPin, IconStar, IconEdit, IconTrash, IconCheck, IconX } from '../components/Icons'
+import { IconSearch, IconUtensils, IconPin, IconStar, IconEdit, IconTrash, IconCheck, IconX, IconCompass } from '../components/Icons'
 import { fetchPlaceReviews } from '../utils/reviews'
 
 export default function PlacesPage() {
-  const { places, updatePlace, deletePlace } = useStore()
+  const { places, updatePlace, deletePlace, setFlyToPlace, setTab } = useStore()
   const [filter, setFilter] = useState('all')
   const [editing, setEditing] = useState(null)
   const [editData, setEditData] = useState({})
@@ -113,6 +113,7 @@ export default function PlacesPage() {
               onSave={saveEdit}
               onCancel={() => setEditing(null)}
               onDelete={() => deletePlace(place.id)}
+              onShowMap={() => { setFlyToPlace(place); setTab('map') }}
             />
           ))}
         </div>
@@ -142,7 +143,7 @@ function StarRow({ rating, count }) {
   )
 }
 
-function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCancel, onDelete }) {
+function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCancel, onDelete, onShowMap }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [review, setReview]               = useState(null)
   const PlaceIcon = place.type === 'restaurant' ? IconUtensils : IconPin
@@ -220,7 +221,11 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
             ) : (
               <div style={{ fontSize: 13, color: 'var(--text-mute)', marginBottom: 10, fontStyle: 'italic' }}>No notes yet</div>
             )}
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={onShowMap} style={{ ...smallBtn, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--orange-deep)', borderColor: 'var(--orange-tint)' }}>
+                <IconCompass size={12} color="var(--orange-deep)" sw={2} />
+                Map
+              </button>
               <button onClick={onEdit} style={{ ...smallBtn, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <IconEdit size={12} color="var(--text-soft)" sw={2} />
                 Edit

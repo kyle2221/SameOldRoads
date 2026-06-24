@@ -15,6 +15,7 @@ export const useStore = create((set, get) => ({
   currentPath: [],
   selectedRoute: null,
   followingRoute: null,
+  flyToPlace: null,
 
   setUser: (user) => set({ currentUser: user }),
   logout: () => { signOut(); set({ currentUser: null, trips: [], places: [], routes: [], activeTrip: null, trackingActive: false, currentPath: [] }) },
@@ -128,9 +129,14 @@ export const useStore = create((set, get) => ({
   followRoute: (route) => set({ followingRoute: route, activeTab: 'map' }),
   stopFollowing: () => set({ followingRoute: null }),
   setSelectedRoute: (route) => set({ selectedRoute: route }),
+  setFlyToPlace: (place) => set({ flyToPlace: place }),
   saveOwnRoute: async (route) => {
     await db.saveRoute(route)
     set((s) => ({ routes: [...s.routes, route] }))
+  },
+  importHealthTrips: async (newTrips) => {
+    for (const t of newTrips) await db.saveTrip(t)
+    set((s) => ({ trips: [...newTrips, ...s.trips] }))
   },
 }))
 

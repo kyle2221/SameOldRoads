@@ -19,7 +19,7 @@ function getTimeGreeting() {
 }
 
 export default function HomePage() {
-  const { trips, places, routes, setTab, followRoute, currentUser, logout } = useStore()
+  const { trips, places, routes, setTab, followRoute, currentUser, logout, importHealthTrips } = useStore()
   const [showProfile, setShowProfile] = useState(false)
 
   const recentTrips = [...trips].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3)
@@ -189,6 +189,7 @@ export default function HomePage() {
           places={places}
           onClose={() => setShowProfile(false)}
           onLogout={() => { setShowProfile(false); logout() }}
+          onImportHealth={importHealthTrips}
         />
       )}
     </div>

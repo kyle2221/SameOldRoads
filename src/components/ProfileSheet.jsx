@@ -1,16 +1,75 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import NodeBackground from './NodeBackground'
 import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
+import { uid } from '../utils/uid'
 import {
   IconX, IconRoad, IconClock, IconFlag, IconPin, IconZap,
-  IconTrophy, IconMedal, IconCompass, IconUtensils, IconStar, IconLock,
+  IconTrophy, IconMedal, IconCompass, IconUtensils, IconStar, IconLock, IconCamera,
 } from './Icons'
 
 // Full-screen Strava-style athlete profile: lifetime aggregates, personal
 // records, a recent-activity bar chart, and the achievement showcase.
 // All metrics derive from local trip/place data — no network required.
-export default function ProfileSheet({ user, trips, places, onClose, onLogout }) {
+export default function ProfileSheet({ user, trips, places, onClose, onLogout, onImportHealth }) {
   const stats = useMemo(() => computeStats(trips, places), [trips, places])
+  const [healthStatus, setHealthStatus] = useState(null)  // null | 'parsing' | 'done' | 'error'
+  const [healthCount, setHealthCount] = useState(0)
+
+  async function handleHealthFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setHealthStatus('parsing')
+    try {
+      const text = await file.text()
+      const doc = new DOMParser().parseFromString(text, 'text/xml')
+      const workouts = [...doc.querySelectorAll('Workout')]
+      // Filter to driving / general workouts worth importing
+      const TYPES = new Set([
+        'HKWorkoutActivityTypeAutomobile',
+        'HKWorkoutActivityTypeCycling',
+        'HKWorkoutActivityTypeRunning',
+        'HKWorkoutActivityTypeWalking',
+        'HKWorkoutActivityTypeHiking',
+        'HKWorkoutActivityTypeOther',
+      ])
+      const importable = workouts.filter(w => {
+        const t = w.getAttribute('workoutActivityType') || ''
+        return TYPES.has(t) || t.includes('Automobile')
+      })
+      if (importable.length === 0) {
+        // Try importing all workouts if none match the filter
+        importable.push(...workouts.slice(0, 50))
+      }
+      const imported = importable.map(w => {
+        const start = new Date(w.getAttribute('startDate') || Date.now()).getTime()
+        const end   = new Date(w.getAttribute('endDate')   || Date.now()).getTime()
+        const distM = parseFloat(w.getAttribute('totalDistance') || '0')
+        const unit  = w.getAttribute('totalDistanceUnit') || 'km'
+        const distMeters = unit === 'mi' ? distM * 1609.34 : distM * 1000
+        const typeRaw = (w.getAttribute('workoutActivityType') || 'Trip').replace('HKWorkoutActivityType', '')
+        return {
+          id: uid(),
+          name: `Health: ${typeRaw} ${new Date(start).toLocaleDateString()}`,
+          createdAt: start,
+          startTime: start,
+          endTime: end,
+          duration: end - start,
+          distance: distMeters,
+          path: [],
+          places: [],
+          source: 'apple-health',
+        }
+      })
+      if (onImportHealth && imported.length > 0) {
+        await onImportHealth(imported)
+      }
+      setHealthCount(imported.length)
+      setHealthStatus('done')
+    } catch {
+      setHealthStatus('error')
+    }
+    e.target.value = ''
+  }
 
   const initials = user?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'
   const providerLabel = { google: 'Google', apple: 'Apple', email: 'Email', guest: 'Guest' }[user?.provider] || 'Member'
@@ -132,6 +191,50 @@ export default function ProfileSheet({ user, trips, places, onClose, onLogout })
               <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-mute)', marginTop: 2 }}>{a.sub}</div>
             </div>
           ))}
+        </div>
+
+        {/* Apple Health Import */}
+        <div style={{ padding: '20px 16px 0' }}>
+          <div style={{ background: 'var(--surface)', borderRadius: 18, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-soft)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, #ff2d55, #ff6b88)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <IconCamera size={18} color="#fff" sw={2} />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.3 }}>Apple Health</div>
+                <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 1 }}>Import workouts from exported Health data</div>
+              </div>
+            </div>
+            <div style={{ padding: '13px 16px' }}>
+              {healthStatus === 'parsing' && (
+                <div style={{ fontSize: 13, color: 'var(--text-soft)', textAlign: 'center', padding: '8px 0' }}>Parsing health data…</div>
+              )}
+              {healthStatus === 'done' && (
+                <div style={{ fontSize: 13, color: '#22c55e', fontWeight: 700, textAlign: 'center', padding: '6px 0' }}>
+                  ✓ Imported {healthCount} workout{healthCount !== 1 ? 's' : ''}
+                </div>
+              )}
+              {healthStatus === 'error' && (
+                <div style={{ fontSize: 13, color: 'var(--orange-deep)', fontWeight: 600, textAlign: 'center', padding: '6px 0' }}>
+                  Could not parse the file. Export from Health → Profile → Export.
+                </div>
+              )}
+              <label style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '11px 0', borderRadius: 12,
+                background: 'linear-gradient(135deg, rgba(255,45,85,0.08), rgba(255,107,136,0.08))',
+                border: '1.5px dashed rgba(255,45,85,0.3)',
+                color: '#ff2d55', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
+              }}>
+                {healthStatus === 'parsing' ? '…' : 'Choose export.xml'}
+                <input type="file" accept=".xml" onChange={handleHealthFile} style={{ display: 'none' }} />
+              </label>
+              <div style={{ fontSize: 10, color: 'var(--text-mute)', marginTop: 8, textAlign: 'center', lineHeight: 1.5 }}>
+                Health app → Profile icon → Export All Health Data → share the ZIP → extract export.xml
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sign out */}
