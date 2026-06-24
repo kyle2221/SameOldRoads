@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { signInWithEmail, signUpWithEmail, signInAsGuest } from '../auth'
 import NodeBackground from '../components/NodeBackground'
+import { toast } from '../store/toast'
 
 const inputStyle = {
   width: '100%', padding: '14px 16px', borderRadius: 14, fontSize: 16,
   border: '1.5px solid #e8e8e8', background: '#fafafa', color: '#0e0e10',
   outline: 'none', marginBottom: 12, WebkitAppearance: 'none', appearance: 'none',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
 }
 
 const btnPrimary = {
-  width: '100%', padding: '15px 0', borderRadius: 14, fontSize: 16, fontWeight: 800,
+  width: '100%', padding: '15px 0', borderRadius: 14, fontSize: 16, fontWeight: 700,
+  fontFamily: 'var(--font-display)',
   background: 'linear-gradient(135deg, #ff8a52, #ef5616)', color: '#fff', border: 'none',
-  boxShadow: '0 6px 20px rgba(239,86,22,0.35)', cursor: 'pointer', marginBottom: 10,
+  boxShadow: '0 8px 24px rgba(239,86,22,0.32)', cursor: 'pointer', marginBottom: 10,
 }
 
 const btnOutline = {
@@ -62,59 +65,98 @@ export default function AuthPage({ onAuth }) {
   }
 
   const handleGuest = async () => { const user = await signInAsGuest(); onAuth(user) }
-  const handleGoogle = () => setError('Google Sign-In requires Firebase setup. Use email or continue as guest.')
-  const handleApple = () => setError('Apple Sign-In requires an Apple Developer account. Use email or continue as guest.')
+  const handleGoogle = () => toast.info('Google Sign-In requires Firebase setup. Use email or continue as guest.')
+  const handleApple = () => toast.info('Apple Sign-In requires an Apple Developer account. Use email or continue as guest.')
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#1a0d04', overflow: 'hidden' }}>
-      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, #120800 0%, #2a1106 40%, #3d1a08 100%)', overflow: 'hidden' }}>
+      {/* Hero */}
+      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, #0a0500 0%, #1f0c04 40%, #3d1a08 100%)', overflow: 'hidden' }}>
         <NodeBackground color="#ff8c3c" count={38} connectDist={110} speed={0.35} />
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 260, height: 260, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,60,0.22) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,100,30,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', textAlign: 'center', zIndex: 1, padding: '0 24px' }}>
-          <div style={{ fontSize: 52, marginBottom: 16, filter: 'drop-shadow(0 2px 12px rgba(255,140,60,0.5))' }}>🛣️</div>
-          <h1 style={{ margin: '0 0 10px', fontSize: 34, fontWeight: 900, color: '#fff', letterSpacing: -1, lineHeight: 1.1 }}>Same Old<br /><span style={{ color: '#ff8a52' }}>Roads</span></h1>
-          <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,220,190,0.72)', fontWeight: 500 }}>Your road trips, beautifully tracked.</p>
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,60,0.22) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,100,30,0.16) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', textAlign: 'center', zIndex: 1, padding: '0 24px', animation: 'fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1)' }}>
+          {/* Logo badge */}
+          <div style={{
+            width: 72, height: 72, borderRadius: 22, margin: '0 auto 18px',
+            background: 'linear-gradient(145deg, #ff8a52, #ef5616)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 36, boxShadow: '0 12px 40px rgba(239,86,22,0.5)',
+            border: '2px solid rgba(255,255,255,0.15)',
+          }}>🛣️</div>
+          <h1 style={{
+            margin: '0 0 10px', fontSize: 36, fontWeight: 700, color: '#fff',
+            letterSpacing: -1.2, lineHeight: 1.05,
+            fontFamily: 'var(--font-display)',
+          }}>
+            Same Old<br /><span style={{ background: 'linear-gradient(135deg, #ff8a52, #ffa066)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Roads</span>
+          </h1>
+          <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,220,190,0.7)', fontWeight: 500, letterSpacing: 0.2 }}>
+            Your road trips, beautifully tracked.
+          </p>
         </div>
         <div style={{ position: 'absolute', bottom: -2, left: 0, right: 0, height: 60, background: 'linear-gradient(180deg, transparent, #fff)', pointerEvents: 'none' }} />
       </div>
 
-      <div style={{ background: '#fff', borderRadius: '28px 28px 0 0', padding: '28px 24px 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)', marginTop: -24, maxHeight: '62%', overflowY: 'auto' }}>
+      {/* Sheet */}
+      <div style={{
+        background: '#fff', borderRadius: '28px 28px 0 0',
+        padding: '28px 24px 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
+        marginTop: -28, maxHeight: '62%', overflowY: 'auto',
+        animation: 'slideUpSheet 0.4s cubic-bezier(0.16,1,0.3,1)',
+      }}>
         <div style={{ width: 36, height: 4, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 22px' }} />
-        <h2 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 900, color: '#0e0e10', letterSpacing: -0.6 }}>{mode === 'signin' ? 'Welcome back' : 'Create account'}</h2>
-        <p style={{ margin: '0 0 22px', fontSize: 14, color: '#9b9ba0' }}>{mode === 'signin' ? 'Sign in to your account to continue.' : 'Start tracking your road adventures.'}</p>
+        <h2 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 700, color: '#0e0e10', letterSpacing: -0.6, fontFamily: 'var(--font-display)' }}>
+          {mode === 'signin' ? 'Welcome back' : 'Create account'}
+        </h2>
+        <p style={{ margin: '0 0 22px', fontSize: 14, color: '#9b9ba0' }}>
+          {mode === 'signin' ? 'Sign in to your account to continue.' : 'Start tracking your road adventures.'}
+        </p>
 
         {!showEmail ? (
           <>
-            <button onClick={handleGoogle} style={btnOutline}><GoogleLogo />Continue with Google</button>
-            <button onClick={handleApple} style={{ ...btnOutline, background: '#000', color: '#fff', borderColor: '#000' }}><AppleLogo />Continue with Apple</button>
+            <button onClick={handleGoogle} className="pressable" style={btnOutline}><GoogleLogo />Continue with Google</button>
+            <button onClick={handleApple} className="pressable" style={{ ...btnOutline, background: '#000', color: '#fff', borderColor: '#000' }}><AppleLogo />Continue with Apple</button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 14px' }}>
               <div style={{ flex: 1, height: 1, background: '#ebebeb' }} />
               <span style={{ fontSize: 12, color: '#b0b0b5', fontWeight: 600 }}>or</span>
               <div style={{ flex: 1, height: 1, background: '#ebebeb' }} />
             </div>
-            <button onClick={() => setShowEmail(true)} style={btnPrimary}>Continue with Email</button>
+            <button onClick={() => setShowEmail(true)} className="pressable" style={btnPrimary}>Continue with Email</button>
           </>
         ) : (
           <>
-            {mode === 'signup' && <input style={inputStyle} placeholder="Your name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />}
+            {mode === 'signup' && (
+              <input style={inputStyle} placeholder="Your name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
+            )}
             <input style={inputStyle} type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" inputMode="email" />
-            <input style={{ ...inputStyle, marginBottom: 16 }} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} onKeyDown={e => e.key === 'Enter' && handleEmail()} />
-            {error && <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 10, background: '#fff3f0', border: '1px solid #ffccc2', fontSize: 13, color: '#c0392b', fontWeight: 600 }}>{error}</div>}
-            <button onClick={handleEmail} disabled={loading} style={{ ...btnPrimary, opacity: loading ? 0.7 : 1 }}>{loading ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Create Account'}</button>
-            <button onClick={() => setShowEmail(false)} style={{ ...btnOutline, marginBottom: 6 }}>Back</button>
+            <input
+              style={{ ...inputStyle, marginBottom: 16 }}
+              type="password" placeholder="Password" value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              onKeyDown={e => e.key === 'Enter' && handleEmail()}
+            />
+            {error && (
+              <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 10, background: '#fff3f0', border: '1px solid #ffccc2', fontSize: 13, color: '#c0392b', fontWeight: 600 }}>
+                {error}
+              </div>
+            )}
+            <button onClick={handleEmail} disabled={loading} className="pressable" style={{ ...btnPrimary, opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+            </button>
+            <button onClick={() => setShowEmail(false)} className="pressable" style={{ ...btnOutline, marginBottom: 6 }}>Back</button>
           </>
         )}
 
-        {error && !showEmail && <div style={{ marginBottom: 10, padding: '10px 14px', borderRadius: 10, background: '#fff8f0', border: '1px solid #ffe0cc', fontSize: 13, color: '#c0392b', fontWeight: 600 }}>{error}</div>}
-
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '4px 0 8px' }}>
           <span style={{ fontSize: 13, color: '#9b9ba0' }}>{mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}</span>
-          <button onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ fontSize: 13, fontWeight: 700, color: '#ef5616', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ fontSize: 13, fontWeight: 700, color: '#ef5616', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-display)' }}>
             {mode === 'signin' ? 'Sign Up' : 'Sign In'}
           </button>
         </div>
-        <button onClick={handleGuest} style={{ width: '100%', padding: '12px 0', borderRadius: 12, background: 'none', border: 'none', fontSize: 13, color: '#b0b0b5', cursor: 'pointer', fontWeight: 600, marginBottom: 8 }}>Continue as Guest</button>
+        <button onClick={handleGuest} className="pressable" style={{ width: '100%', padding: '12px 0', borderRadius: 12, background: 'none', border: 'none', fontSize: 13, color: '#b0b0b5', cursor: 'pointer', fontWeight: 600, marginBottom: 8 }}>Continue as Guest</button>
         <div style={{ height: 'env(safe-area-inset-bottom, 16px)', minHeight: 16 }} />
       </div>
     </div>

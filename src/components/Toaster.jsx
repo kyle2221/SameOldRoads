@@ -8,14 +8,12 @@ const ICONS = {
 }
 
 const COLORS = {
-  info: { bg: 'var(--surface)', border: 'var(--border)', accent: 'var(--text-soft)' },
-  success: { bg: '#f0fdf4', border: '#bbf7d0', accent: '#15803d' },
-  error: { bg: '#fef2f2', border: '#fecaca', accent: '#b91c1c' },
-  warn: { bg: '#fffbeb', border: '#fde68a', accent: '#b45309' },
+  info: { bg: 'var(--glass-bg)', border: 'var(--glass-border)', accent: 'var(--text-soft)' },
+  success: { bg: 'var(--green-wash)', border: '#bbf7d0', accent: 'var(--green)' },
+  error: { bg: 'var(--red-wash)', border: '#fecaca', accent: 'var(--red)' },
+  warn: { bg: 'var(--yellow-wash)', border: '#fde68a', accent: 'var(--yellow)' },
 }
 
-// Toaster — fixed at the top of the viewport, dismissible, supports an optional
-// action button (e.g. "Retry"). Renders above everything (z-index 9999).
 export default function Toaster() {
   const { toasts, dismiss } = useToastStore()
 
@@ -33,32 +31,34 @@ export default function Toaster() {
         return (
           <div key={t.id} style={{
             background: c.bg, border: `1px solid ${c.border}`, color: 'var(--text)',
-            borderRadius: 14, padding: '12px 14px', boxShadow: 'var(--shadow-pop)',
+            borderRadius: 14, padding: '12px 14px',
+            backdropFilter: 'blur(20px) saturate(1.4)', WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+            boxShadow: 'var(--shadow-pop)',
             display: 'flex', alignItems: 'center', gap: 10,
             pointerEvents: 'auto',
-            animation: 'toastIn 0.22s ease-out',
+            animation: 'fadeInDown 0.22s cubic-bezier(0.16,1,0.3,1)',
           }}>
-            <span style={{ fontSize: 16, flexShrink: 0, color: c.accent }}>{ICONS[t.type] || ICONS.info}</span>
+            <span style={{
+              fontSize: 14, flexShrink: 0, fontWeight: 700,
+              width: 22, height: 22, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: t.type === 'success' ? 'var(--green)' : t.type === 'error' ? 'var(--red)' : 'transparent',
+              color: (t.type === 'success' || t.type === 'error') ? '#fff' : c.accent,
+            }}>{ICONS[t.type] || ICONS.info}</span>
             <div style={{ flex: 1, fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{t.message}</div>
             {t.action && (
-              <button onClick={() => { t.action.onClick?.(); dismiss(t.id) }}
-                style={{ background: 'none', border: 'none', color: 'var(--orange-deep)', fontSize: 12, fontWeight: 800, cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>
+              <button onClick={() => { t.action.onClick?.(); dismiss(t.id) }} className="pressable"
+                style={{ background: 'none', border: 'none', color: 'var(--orange-deep)', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, whiteSpace: 'nowrap', fontFamily: 'var(--font-display)' }}>
                 {t.action.label}
               </button>
             )}
-            <button onClick={() => dismiss(t.id)} aria-label="Dismiss"
-              style={{ background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 16, cursor: 'pointer', padding: 0, lineHeight: 1, flexShrink: 0 }}>
+            <button onClick={() => dismiss(t.id)} aria-label="Dismiss" className="pressable"
+              style={{ background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 18, cursor: 'pointer', padding: 0, lineHeight: 1, flexShrink: 0, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               ×
             </button>
           </div>
         )
       })}
-      <style>{`
-        @keyframes toastIn {
-          from { opacity: 0; transform: translateY(-12px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
     </div>
   )
 }
