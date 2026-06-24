@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import { useStore } from '../store'
-import { formatDistance, formatDuration, formatDate } from '../utils/format'
+import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import NodeBackground from '../components/NodeBackground'
 import RouteThumb from '../components/RouteThumb'
+import {
+  IconCar, IconCompass, IconStar, IconFlag, IconRoad, IconTrophy,
+  IconZap, IconClock, IconPin, IconUtensils, IconLock,
+} from '../components/Icons'
 
 function getTimeGreeting() {
   const h = new Date().getHours()
-  if (h < 5)  return ['Night owl driving?', '🌙']
-  if (h < 12) return ['Good morning', '☀️']
-  if (h < 17) return ['Good afternoon', '🌤️']
-  if (h < 21) return ['Good evening', '🌆']
-  return ['Late-night run?', '🌕']
+  if (h < 5) return 'Night owl driving?'
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  if (h < 21) return 'Good evening'
+  return 'Late-night run?'
 }
 
 export default function HomePage() {
@@ -24,17 +28,16 @@ export default function HomePage() {
 
   const firstName = currentUser?.name?.split(' ')[0] || 'Explorer'
   const initials = currentUser?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'
-  const [greetText, greetIcon] = getTimeGreeting()
-
+  const greetText = getTimeGreeting()
   const featuredRoutes = routes.filter(r => !r.isOwn)
+  const totalMiles = Math.round(totalDist / 1609.34)
 
-  const totalMiles = totalDist / 1609.34
   const achievements = [
-    { icon: '🏁', label: 'First Trip', sub: 'Hit the road', unlocked: trips.length >= 1 },
-    { icon: '🧭', label: 'Trailblazer', sub: '3 trips', unlocked: trips.length >= 3 },
-    { icon: '🛣️', label: 'Century', sub: '100 miles', unlocked: totalMiles >= 100 },
-    { icon: '🍽️', label: 'Foodie', sub: '3 eats', unlocked: restaurants.length >= 3 },
-    { icon: '⭐', label: 'Explorer', sub: '5 spots', unlocked: places.length >= 5 },
+    { Icon: IconFlag,     label: 'First Trip',  sub: 'Hit the road', unlocked: trips.length >= 1 },
+    { Icon: IconCompass,  label: 'Trailblazer', sub: '3 trips',       unlocked: trips.length >= 3 },
+    { Icon: IconTrophy,   label: 'Century',     sub: '100 miles',     unlocked: totalMiles >= 100 },
+    { Icon: IconUtensils, label: 'Foodie',      sub: '3 eats',        unlocked: restaurants.length >= 3 },
+    { Icon: IconStar,     label: 'Explorer',    sub: '5 spots',       unlocked: places.length >= 5 },
   ]
   const unlockedCount = achievements.filter(a => a.unlocked).length
 
@@ -43,7 +46,7 @@ export default function HomePage() {
 
       {/* Dark hero */}
       <div style={{
-        padding: '50px 20px 32px',
+        padding: '50px 20px 56px',
         background: 'linear-gradient(170deg, #100500 0%, #2a0e05 48%, #a03208 82%, #d44810 100%)',
         position: 'relative', overflow: 'hidden', minHeight: 230,
         display: 'flex', flexDirection: 'column',
@@ -55,7 +58,7 @@ export default function HomePage() {
         {/* Top bar */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, zIndex: 2 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 17, filter: 'drop-shadow(0 1px 6px rgba(255,140,40,0.6))' }}>🛣️</span>
+            <IconRoad size={18} color="rgba(255,200,120,0.8)" sw={2} />
             <span style={{ fontSize: 11, letterSpacing: 3, color: 'rgba(255,255,255,0.55)', fontWeight: 800, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Same Old Roads</span>
           </div>
           <button
@@ -75,7 +78,7 @@ export default function HomePage() {
 
         <div style={{ position: 'relative', zIndex: 2, flex: 1 }}>
           <div style={{ fontSize: 11, color: 'rgba(255,210,140,0.75)', fontWeight: 700, marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>
-            {greetIcon} {greetText}, {firstName}
+            {greetText}, {firstName}
           </div>
           <h1 style={{ margin: '0 0 10px', fontSize: 40, fontWeight: 900, color: '#fff', lineHeight: 0.96, letterSpacing: -0.5, fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>
             Where Will the<br />Road Take You?
@@ -86,167 +89,168 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Profile popover */}
-      {showProfile && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200 }} onClick={() => setShowProfile(false)}>
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              position: 'absolute', top: 86, right: 16,
-              background: '#fff', borderRadius: 20,
-              boxShadow: '0 12px 48px rgba(0,0,0,0.18)',
-              border: '1px solid var(--border)', padding: '18px 20px', minWidth: 228, zIndex: 201,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #ff8a52, #ef5616)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16 }}>
-                {initials}
+      {/* White content area with orange bleed at top */}
+      <div className="hero-to-content">
+
+        {/* Profile popover */}
+        {showProfile && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 200 }} onClick={() => setShowProfile(false)}>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                position: 'absolute', top: 86, right: 16,
+                background: '#fff', borderRadius: 20,
+                boxShadow: '0 12px 48px rgba(0,0,0,0.18)',
+                border: '1px solid var(--border)', padding: '18px 20px', minWidth: 228, zIndex: 201,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #ff8a52, #ef5616)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16 }}>
+                  {initials}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)' }}>{currentUser?.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 1 }}>{currentUser?.email || 'Guest account'}</div>
+                </div>
+              </div>
+              <div style={{ height: 1, background: 'var(--border)', marginBottom: 13 }} />
+              <button
+                onClick={() => { setShowProfile(false); logout() }}
+                style={{ width: '100%', padding: '11px 0', borderRadius: 13, background: '#fff8f6', border: '1px solid var(--orange-tint)', color: 'var(--orange-deep)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Stats 2×2 grid */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '24px 16px 8px' }}>
+          {[
+            { Icon: IconFlag,     label: 'Trips',  value: trips.length },
+            { Icon: IconRoad,     label: 'Miles',  value: totalMiles },
+            { Icon: IconUtensils, label: 'Food',   value: restaurants.length },
+            { Icon: IconPin,      label: 'Spots',  value: destinations.length },
+          ].map(s => (
+            <div key={s.label} style={{
+              width: 'calc(50% - 5px)',
+              background: 'var(--surface)', borderRadius: 18,
+              padding: '16px 18px',
+              border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'flex-start', gap: 13,
+            }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <s.Icon size={18} color="var(--orange-deep)" sw={2} />
               </div>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)' }}>{currentUser?.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 1 }}>{currentUser?.email || 'Guest account'}</div>
+                <div style={{
+                  fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+                  fontFamily: "'Rajdhani', sans-serif",
+                  background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                }}>{s.value}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
               </div>
             </div>
-            <div style={{ height: 1, background: 'var(--border)', marginBottom: 13 }} />
-            <button
-              onClick={() => { setShowProfile(false); logout() }}
-              style={{ width: '100%', padding: '11px 0', borderRadius: 13, background: '#fff8f6', border: '1px solid var(--orange-tint)', color: 'var(--orange-deep)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Stats 2×2 grid */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '20px 16px 8px' }}>
-        {[
-          { icon: '🏁', label: 'Trips', value: trips.length },
-          { icon: '🛣️', label: 'Miles', value: formatDistance(totalDist) },
-          { icon: '🍽️', label: 'Restaurants', value: restaurants.length },
-          { icon: '📍', label: 'Spots', value: destinations.length },
-        ].map(s => (
-          <div key={s.label} style={{
-            width: 'calc(50% - 5px)',
-            background: 'var(--surface)', borderRadius: 18,
-            padding: '16px 18px',
-            border: '1px solid var(--border)',
-          }}>
-            <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
-            <div style={{
-              fontSize: 30, fontWeight: 900, letterSpacing: -0.5,
-              fontFamily: "'Rajdhani', sans-serif",
-              background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 2, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Quick actions */}
-      <div style={{ padding: '16px 16px 24px' }}>
-        <div style={{ fontSize: 12, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <QuickBtn
-            icon="🚗" label="Start Trip" sub="Track your route"
-            onClick={() => setTab('map')} accent
-          />
-          <QuickBtn
-            icon="🧭" label="Explore" sub="Find routes"
-            onClick={() => setTab('routes')}
-          />
-          <QuickBtn
-            icon="⭐" label="Places" sub="My saved spots"
-            onClick={() => setTab('places')}
-          />
-        </div>
-      </div>
-
-      {/* Achievements */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0 16px', marginBottom: 12 }}>
-          <div style={{ fontSize: 12, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Achievements</div>
-          <div style={{ fontSize: 12, color: 'var(--orange-deep)', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>{unlockedCount}/{achievements.length}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '0 16px 4px' }}>
-          {achievements.map(a => (
-            <Badge key={a.label} {...a} />
           ))}
         </div>
-      </div>
 
-      {/* Featured Routes */}
-      {featuredRoutes.length > 0 && (
-        <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
-          <div style={{ display: 'flex', gap: 13, overflowX: 'auto', paddingBottom: 6, paddingLeft: 16, paddingRight: 16 }}>
-            {featuredRoutes.map(route => (
-              <HomeRouteCard key={route.id} route={route} onFollow={() => followRoute(route)} />
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* Recent trips */}
-      {recentTrips.length > 0 && (
-        <Section title="Recent Trips" action="See all" onAction={() => setTab('trips')}>
-          <div style={{ padding: '0 16px' }}>
-            <div style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-              {recentTrips.map((trip, i) => (
-                <TripRow key={trip.id} trip={trip} last={i === recentTrips.length - 1} places={places} />
-              ))}
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {trips.length === 0 && featuredRoutes.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '30px 24px 50px' }}>
-          <div style={{ fontSize: 52, marginBottom: 14, opacity: 0.6 }}>🛣️</div>
-          <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Start your first adventure</div>
-          <div style={{ fontSize: 14, color: 'var(--text-mute)', lineHeight: 1.6, maxWidth: 260, margin: '0 auto' }}>
-            Tap Track to begin recording your journey.
+        {/* Quick actions */}
+        <div style={{ padding: '16px 16px 20px' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <QuickBtn Icon={IconCar}     label="Start Trip" sub="Track your route" onClick={() => setTab('map')}    accent />
+            <QuickBtn Icon={IconCompass} label="Explore"    sub="Find routes"      onClick={() => setTab('routes')} />
+            <QuickBtn Icon={IconStar}    label="Places"     sub="My saved spots"   onClick={() => setTab('places')} />
           </div>
         </div>
-      )}
 
-      <div style={{ height: 28 }} />
+        {/* Achievements */}
+        <div style={{ marginBottom: 26 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Achievements</div>
+            <div style={{ fontSize: 12, color: 'var(--orange-deep)', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>{unlockedCount}/{achievements.length}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '0 16px 4px', scrollbarWidth: 'none' }}>
+            {achievements.map(a => <Badge key={a.label} {...a} />)}
+          </div>
+        </div>
+
+        {/* Featured Routes */}
+        {featuredRoutes.length > 0 && (
+          <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
+            <div style={{ display: 'flex', gap: 13, overflowX: 'auto', paddingBottom: 6, paddingLeft: 16, paddingRight: 16, scrollbarWidth: 'none' }}>
+              {featuredRoutes.map(route => (
+                <HomeRouteCard key={route.id} route={route} onFollow={() => followRoute(route)} />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* Recent trips */}
+        {recentTrips.length > 0 && (
+          <Section title="Recent Trips" action="See all" onAction={() => setTab('trips')}>
+            <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {recentTrips.map(trip => (
+                <TripCard key={trip.id} trip={trip} places={places} onClick={() => setTab('trips')} />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {trips.length === 0 && featuredRoutes.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 24px 50px' }}>
+            <div style={{ display: 'inline-flex', marginBottom: 14 }}>
+              <IconRoad size={52} color="rgba(0,0,0,0.15)" />
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Start your first adventure</div>
+            <div style={{ fontSize: 14, color: 'var(--text-mute)', lineHeight: 1.6, maxWidth: 260, margin: '0 auto' }}>
+              Tap Track to begin recording your journey.
+            </div>
+          </div>
+        )}
+
+        <div style={{ height: 28 }} />
+      </div>
     </div>
   )
 }
 
-function QuickBtn({ icon, label, sub, onClick, accent }) {
+function QuickBtn({ Icon, label, sub, onClick, accent }) {
   return (
     <button className="pressable" onClick={onClick} style={{
       flex: 1, padding: '16px 8px 14px',
       background: accent ? 'linear-gradient(145deg, #ff8a52, #ef5616)' : 'var(--surface)',
       border: `1px solid ${accent ? 'transparent' : 'var(--border)'}`,
-      borderRadius: 20, color: accent ? '#fff' : 'var(--text)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+      borderRadius: 18, color: accent ? '#fff' : 'var(--text)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
       boxShadow: accent ? '0 6px 22px rgba(239,86,22,0.36)' : 'none',
     }}>
-      <span style={{ fontSize: 24 }}>{icon}</span>
+      <Icon size={24} color={accent ? '#fff' : 'var(--orange)'} sw={1.8} />
       <div>
         <div style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>{label}</div>
-        <div style={{ fontSize: 10, opacity: accent ? 0.7 : 0, color: accent ? '#fff' : 'var(--text-mute)', marginTop: 2 }}>{sub}</div>
+        <div style={{ fontSize: 10, color: accent ? 'rgba(255,255,255,0.7)' : 'var(--text-mute)', marginTop: 2 }}>{sub}</div>
       </div>
     </button>
   )
 }
 
-function Badge({ icon, label, sub, unlocked }) {
+function Badge({ Icon, label, sub, unlocked }) {
   return (
     <div style={{
-      minWidth: 92, flexShrink: 0, borderRadius: 18, padding: '14px 10px 12px',
+      minWidth: 90, flexShrink: 0, borderRadius: 18, padding: '14px 10px 12px',
       textAlign: 'center',
       background: unlocked ? 'linear-gradient(160deg, #fff4ec, #ffe6d4)' : 'var(--surface)',
       border: `1px solid ${unlocked ? 'var(--orange-tint)' : 'var(--border)'}`,
-      opacity: unlocked ? 1 : 0.55,
+      opacity: unlocked ? 1 : 0.5,
     }}>
-      <div style={{ fontSize: 26, marginBottom: 5, filter: unlocked ? 'none' : 'grayscale(1)' }}>{unlocked ? icon : '🔒'}</div>
-      <div style={{ fontSize: 12, fontWeight: 800, color: unlocked ? 'var(--orange-deep)' : 'var(--text-mute)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.4, lineHeight: 1.1 }}>{label}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 7 }}>
+        {unlocked
+          ? <Icon size={24} color="var(--orange-deep)" sw={2} />
+          : <IconLock size={22} color="var(--text-mute)" sw={1.8} />
+        }
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 800, color: unlocked ? 'var(--orange-deep)' : 'var(--text-mute)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.4, lineHeight: 1.1 }}>{label}</div>
       <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-mute)', marginTop: 2, letterSpacing: 0.3 }}>{sub}</div>
     </div>
   )
@@ -270,24 +274,27 @@ function Section({ title, action, onAction, children }) {
 
 function HomeRouteCard({ route, onFollow }) {
   return (
-    <div style={{ minWidth: 200, borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0, background: 'var(--surface)' }}>
-      {/* Dark image header */}
+    <div className="pressable" style={{ minWidth: 220, borderRadius: 20, overflow: 'hidden', flexShrink: 0, background: '#180800', boxShadow: '0 4px 20px rgba(0,0,0,0.14)' }}>
       <div style={{
-        height: 108, position: 'relative', overflow: 'hidden',
+        height: 124, position: 'relative', overflow: 'hidden',
         background: `linear-gradient(150deg, #180800 0%, ${route.coverColor || '#ff7a3c'} 100%)`,
-        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '10px 13px',
       }}>
-        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '3px 9px' }}>
-          <span style={{ fontSize: 11, color: '#fff', fontWeight: 800 }}>
-            {formatDistance(route.distance || 0)}
-          </span>
+        {route.photo && (
+          <img
+            src={route.photo} alt={route.name}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={e => { e.target.style.display = 'none' }}
+          />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(10,4,0,0.72) 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '3px 9px' }}>
+          <span style={{ fontSize: 11, color: '#fff', fontWeight: 800 }}>{formatDistance(route.distance || 0)}</span>
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: -0.2, lineHeight: 1.05, textShadow: '0 1px 8px rgba(0,0,0,0.5)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>
-          {route.name}
+        <div style={{ position: 'absolute', bottom: 12, left: 13, right: 13 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: -0.2, lineHeight: 1.05, textShadow: '0 1px 8px rgba(0,0,0,0.5)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase' }}>{route.name}</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>by {route.author}</div>
         </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>by {route.author}</div>
       </div>
-      {/* CTA */}
       <div style={{ padding: '10px 12px' }}>
         <button onClick={onFollow} style={{
           width: '100%', padding: '9px 0',
@@ -301,26 +308,54 @@ function HomeRouteCard({ route, onFollow }) {
   )
 }
 
-function TripRow({ trip, last, places }) {
+function TripCard({ trip, places, onClick }) {
   const stops = places.filter(p => p.tripId === trip.id)
+  const rCount = stops.filter(p => p.type === 'restaurant').length
+  const dCount = stops.filter(p => p.type === 'destination').length
+
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', padding: '12px 16px',
-      borderBottom: last ? 'none' : '1px solid var(--border-soft)', gap: 13,
+    <div className="pressable" onClick={onClick} style={{
+      background: 'var(--surface)', borderRadius: 18, overflow: 'hidden',
+      border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)',
     }}>
-      <div style={{ width: 56, height: 44, borderRadius: 12, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border)' }}>
-        <RouteThumb path={trip.path} height={44} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2 }}>
-          {formatDate(trip.createdAt)}
-          {stops.length > 0 && <span style={{ color: 'var(--text-soft)' }}> · {stops.length} stop{stops.length !== 1 ? 's' : ''}</span>}
+      <div style={{ position: 'relative', height: 108 }}>
+        <RouteThumb path={trip.path} height={108} />
+        {trip.photo && (
+          <img src={trip.photo} alt={trip.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none' }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 20%, rgba(10,4,0,0.72) 100%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 10, left: 14, right: 80 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.6)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.name}</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>{formatDate(trip.createdAt)}</div>
+        </div>
+        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.42)', backdropFilter: 'blur(8px)', borderRadius: 8, padding: '4px 9px' }}>
+          <span style={{ fontSize: 13, fontWeight: 900, color: '#ff9a60', fontFamily: "'Rajdhani', sans-serif" }}>{formatDistance(trip.distance || 0)}</span>
         </div>
       </div>
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--orange-deep)', letterSpacing: -0.4 }}>{formatDistance(trip.distance || 0)}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 1 }}>{formatDuration(trip.duration || 0)}</div>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 14px', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <IconClock size={13} color="var(--text-mute)" sw={2} />
+          <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700, fontFamily: "'Rajdhani', sans-serif" }}>{formatDuration(trip.duration || 0)}</span>
+        </div>
+        {(trip.avgSpeed || 0) > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <IconZap size={13} color="var(--text-mute)" sw={2} />
+            <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700, fontFamily: "'Rajdhani', sans-serif" }}>{formatSpeed(trip.avgSpeed)}</span>
+          </div>
+        )}
+        <div style={{ flex: 1 }} />
+        {rCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--surface-2)', borderRadius: 7, padding: '3px 8px' }}>
+            <IconUtensils size={11} color="var(--text-mute)" sw={2} />
+            <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 700 }}>{rCount}</span>
+          </div>
+        )}
+        {dCount > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: 'var(--surface-2)', borderRadius: 7, padding: '3px 8px' }}>
+            <IconPin size={11} color="var(--text-mute)" sw={2} />
+            <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 700 }}>{dCount}</span>
+          </div>
+        )}
       </div>
     </div>
   )

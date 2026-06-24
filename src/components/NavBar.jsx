@@ -1,4 +1,5 @@
 import { useStore } from '../store'
+import { IconCar } from './Icons'
 
 export default function NavBar() {
   const { activeTab, setTab, trackingActive } = useStore()
@@ -38,7 +39,7 @@ export default function NavBar() {
         >
           {trackingActive
             ? <span style={{ width: 15, height: 15, borderRadius: 3, background: '#fff', display: 'block' }} />
-            : '🚗'
+            : <IconCar size={22} color="#fff" sw={2} />
           }
           {trackingActive && (
             <span style={{

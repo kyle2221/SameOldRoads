@@ -7,6 +7,7 @@ export const SAMPLE_ROUTES = [
     distance: 185000,
     duration: 14400000,
     coverColor: '#ff7a3c',
+    photo: 'https://images.unsplash.com/photo-1504016798967-7a53f59e6a30?w=800&q=75&auto=format&fit=crop',
     createdAt: Date.now() - 86400000 * 30,
     isOwn: false,
     path: [
@@ -34,6 +35,7 @@ export const SAMPLE_ROUTES = [
     distance: 420000,
     duration: 28800000,
     coverColor: '#f0561a',
+    photo: 'https://images.unsplash.com/photo-1476611338391-6f395a0dd82e?w=800&q=75&auto=format&fit=crop',
     createdAt: Date.now() - 86400000 * 15,
     isOwn: false,
     path: [
@@ -66,6 +68,7 @@ export const SAMPLE_ROUTES = [
     distance: 310000,
     duration: 21600000,
     coverColor: '#ff9a4a',
+    photo: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=75&auto=format&fit=crop',
     createdAt: Date.now() - 86400000 * 7,
     isOwn: false,
     path: [
@@ -100,6 +103,7 @@ export const SAMPLE_TRIPS = [
   {
     id: 'trip-demo-1',
     name: 'Big Sur Coast Run',
+    photo: 'https://images.unsplash.com/photo-1537519646099-335112f03225?w=800&q=75&auto=format&fit=crop',
     createdAt: Date.now() - DAY * 4,
     startTime: Date.now() - DAY * 4,
     endTime: Date.now() - DAY * 4 + 11700000,
@@ -119,6 +123,7 @@ export const SAMPLE_TRIPS = [
   {
     id: 'trip-demo-2',
     name: 'Smoky Mountain Loop',
+    photo: 'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?w=800&q=75&auto=format&fit=crop',
     createdAt: Date.now() - DAY * 12,
     startTime: Date.now() - DAY * 12,
     endTime: Date.now() - DAY * 12 + 7500000,
@@ -137,6 +142,7 @@ export const SAMPLE_TRIPS = [
   {
     id: 'trip-demo-3',
     name: 'Desert Sunset Drive',
+    photo: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=75&auto=format&fit=crop',
     createdAt: Date.now() - DAY * 1,
     startTime: Date.now() - DAY * 1,
     endTime: Date.now() - DAY * 1 + 5400000,

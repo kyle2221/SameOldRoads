@@ -4,6 +4,7 @@ import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
 import { routeAlongRoads } from '../utils/routing'
 import { getWeather } from '../utils/weather'
 import { geocodeSearch } from '../utils/geocode'
+import { IconCar, IconSearch, IconPin, IconCamera, IconUtensils, IconX } from '../components/Icons'
 
 export default function MapPage() {
   const mapRef = useRef(null)
@@ -246,7 +247,7 @@ export default function MapPage() {
             overflow: 'hidden',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 10 }}>
-              <span style={{ fontSize: 16, opacity: 0.5 }}>🔍</span>
+              <IconSearch size={16} color="var(--text-mute)" sw={2} />
               <input
                 className="input-field"
                 value={search}
@@ -260,8 +261,8 @@ export default function MapPage() {
               />
               {(search || searchLoading) && (
                 <button onClick={() => { setSearch(''); setSearchResults([]) }}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text-mute)', lineHeight: 1 }}>
-                  {searchLoading ? '…' : '✕'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mute)', lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                  {searchLoading ? <span style={{ fontSize: 16 }}>…</span> : <IconX size={18} color="var(--text-mute)" sw={2} />}
                 </button>
               )}
             </div>
@@ -273,7 +274,7 @@ export default function MapPage() {
                     borderBottom: i < searchResults.length - 1 ? '1px solid var(--border-soft)' : 'none',
                     textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
                   }}>
-                    <span style={{ fontSize: 14 }}>📍</span>
+                    <IconPin size={14} color="var(--text-mute)" sw={2} />
                     <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, lineHeight: 1.4 }}>{r.name}</span>
                   </button>
                 ))}
@@ -314,8 +315,8 @@ export default function MapPage() {
             <div style={{ display: 'flex', gap: 7, marginLeft: 'auto', paddingLeft: 10 }}>
               <button
                 onClick={() => { setPendingLatLng(userPos || { lat: 0, lng: 0 }); setShowAddPlace(true) }}
-                style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >📍</button>
+                style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              ><IconPin size={18} color="#fff" sw={2} /></button>
               <button
                 onClick={handleStop}
                 style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg, #ff4444, #cc0000)', border: 'none', color: '#fff', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(204,0,0,0.4)' }}
@@ -359,7 +360,7 @@ export default function MapPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           letterSpacing: 1, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif",
         }}>
-          <span style={{ fontSize: 20 }}>🚗</span>
+          <IconCar size={22} color="#fff" sw={2} />
           Start a Trip
         </button>
       )}
@@ -391,7 +392,12 @@ export default function MapPage() {
                 border: `1.5px solid ${newPlace.type === t ? 'var(--orange)' : 'var(--border)'}`,
                 color: newPlace.type === t ? 'var(--orange-deep)' : 'var(--text-soft)', cursor: 'pointer', fontSize: 13, fontWeight: 700,
               }}>
-                {t === 'restaurant' ? '🍽️ Restaurant' : '📍 Destination'}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  {t === 'restaurant'
+                    ? <><IconUtensils size={13} color={newPlace.type === t ? 'var(--orange-deep)' : 'var(--text-soft)'} sw={2} /> Restaurant</>
+                    : <><IconPin size={13} color={newPlace.type === t ? 'var(--orange-deep)' : 'var(--text-soft)'} sw={2} /> Destination</>
+                  }
+                </span>
               </button>
             ))}
           </div>
@@ -403,8 +409,8 @@ export default function MapPage() {
             <div style={{ position: 'relative' }}>
               <img src={newPlace.photo} alt="Place" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 12 }} />
               <button onClick={() => setNewPlace(p => ({ ...p, photo: null }))}
-                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 20, color: '#fff', width: 28, height: 28, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                ✕
+                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 20, color: '#fff', width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconX size={14} color="#fff" sw={2.5} />
               </button>
             </div>
           ) : (
@@ -414,7 +420,7 @@ export default function MapPage() {
               background: 'var(--surface-2)', color: 'var(--text-soft)', cursor: 'pointer',
               fontSize: 14, fontWeight: 600,
             }}>
-              <span style={{ fontSize: 18 }}>📷</span>
+              <IconCamera size={18} color="var(--text-soft)" sw={1.8} />
               Add Photo
               <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} style={{ display: 'none' }} />
             </label>
@@ -456,7 +462,7 @@ function Modal({ title, children, onClose }) {
         <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 4, margin: '0 auto 14px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.3 }}>{title}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><IconX size={20} color="var(--text-mute)" sw={2} /></button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
       </div>

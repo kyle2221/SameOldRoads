@@ -92,6 +92,17 @@ button:focus-visible {
   box-shadow: 0 0 0 3px rgba(255, 106, 43, 0.16);
 }
 
+/* ─── Hero-to-content orange bleed transition ─────────── */
+.hero-to-content {
+  position: relative;
+  border-radius: 26px 26px 0 0;
+  margin-top: -26px;
+  background: var(--bg);
+  z-index: 1;
+  padding-top: 4px;
+  box-shadow: 0 -20px 60px rgba(220, 80, 10, 0.2);
+}
+
 /* ─── Reduced motion ─────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .pressable {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { signInWithEmail, signUpWithEmail, signInAsGuest } from '../auth'
 import NodeBackground from '../components/NodeBackground'
+import { IconRoad } from '../components/Icons'
 
 const inputStyle = {
   width: '100%', padding: '14px 16px', borderRadius: 14, fontSize: 16,
@@ -89,7 +90,9 @@ export default function AuthPage({ onAuth }) {
         <div style={{ position: 'absolute', bottom: 0, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,100,30,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', textAlign: 'center', zIndex: 1, padding: '0 24px' }}>
-          <div style={{ fontSize: 52, marginBottom: 16, filter: 'drop-shadow(0 2px 12px rgba(255,140,60,0.5))' }}>🛣️</div>
+          <div style={{ marginBottom: 16, filter: 'drop-shadow(0 2px 12px rgba(255,140,60,0.5))', display: 'flex', justifyContent: 'center' }}>
+            <IconRoad size={56} color="rgba(255,200,120,0.9)" sw={1.4} />
+          </div>
           <h1 style={{ margin: '0 0 10px', fontSize: 46, fontWeight: 900, color: '#fff', letterSpacing: 0, lineHeight: 0.95, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>
             Same Old<br />
             <span style={{ color: '#ff8a52' }}>Roads</span>
