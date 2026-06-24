@@ -1,15 +1,6 @@
 // Hand-crafted SVG icon set — no emoji, no third-party library.
 // All icons share: stroke-based, rounded caps/joins, consistent weight.
 
-const Svg = ({ size, color, sw, ch, vb = '0 0 24 24' }) => (
-  <svg width={size} height={size} viewBox={vb} fill="none" stroke={color}
-    strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-    {ch}
-  </svg>
-)
-const mk = (ch) => ({ size = 24, color = 'currentColor', sw = 1.8 } = {}) =>
-  <Svg size={size} color={color} sw={sw} ch={ch} />
-
 export const IconCar = ({ size = 24, color = 'currentColor', sw = 1.8 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 17H3a2 2 0 01-2-2v-3l3.5-7h13L21 12v3a2 2 0 01-2 2h-2" />

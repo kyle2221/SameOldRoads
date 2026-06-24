@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatSpeed } from '../utils/format'
 import { routeAlongRoads } from '../utils/routing'

@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import NodeBackground from '../components/NodeBackground'
 import RouteThumb from '../components/RouteThumb'
+import ProfileSheet from '../components/ProfileSheet'
 import {
   IconCar, IconCompass, IconStar, IconFlag, IconRoad, IconTrophy,
   IconZap, IconClock, IconPin, IconUtensils, IconLock,
@@ -92,38 +93,6 @@ export default function HomePage() {
       {/* White content area with orange bleed at top */}
       <div className="hero-to-content">
 
-        {/* Profile popover */}
-        {showProfile && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 200 }} onClick={() => setShowProfile(false)}>
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{
-                position: 'absolute', top: 86, right: 16,
-                background: '#fff', borderRadius: 20,
-                boxShadow: '0 12px 48px rgba(0,0,0,0.18)',
-                border: '1px solid var(--border)', padding: '18px 20px', minWidth: 228, zIndex: 201,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #ff8a52, #ef5616)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16 }}>
-                  {initials}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)' }}>{currentUser?.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 1 }}>{currentUser?.email || 'Guest account'}</div>
-                </div>
-              </div>
-              <div style={{ height: 1, background: 'var(--border)', marginBottom: 13 }} />
-              <button
-                onClick={() => { setShowProfile(false); logout() }}
-                style={{ width: '100%', padding: '11px 0', borderRadius: 13, background: '#fff8f6', border: '1px solid var(--orange-tint)', color: 'var(--orange-deep)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Stats 2×2 grid */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '24px 16px 8px' }}>
           {[
@@ -212,6 +181,16 @@ export default function HomePage() {
 
         <div style={{ height: 28 }} />
       </div>
+
+      {showProfile && (
+        <ProfileSheet
+          user={currentUser}
+          trips={trips}
+          places={places}
+          onClose={() => setShowProfile(false)}
+          onLogout={() => { setShowProfile(false); logout() }}
+        />
+      )}
     </div>
   )
 }
