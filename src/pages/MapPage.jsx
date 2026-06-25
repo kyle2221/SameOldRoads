@@ -60,7 +60,9 @@ export default function MapPage() {
         center: [37.7, -98.5], zoom: 4,
         zoomControl: true, attributionControl: false,
       })
-      L.default.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+      L.default.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 20,
+      }).addTo(map)
       map.on('click', (e) => {
         // drawMode is read from a ref so the closure stays fresh
         if (drawModeRef.current) {

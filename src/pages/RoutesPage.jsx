@@ -4,10 +4,10 @@ import { formatDistance, formatDuration, formatDate } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
 import { uid } from '../utils/uid'
-import { IconRoad, IconUtensils, IconPin, IconClock, IconFlag } from '../components/Icons'
+import { IconRoad, IconUtensils, IconPin, IconClock, IconFlag, IconCompass } from '../components/Icons'
 
 export default function RoutesPage() {
-  const { routes, followRoute, saveOwnRoute, trips, places } = useStore()
+  const { routes, followRoute, saveOwnRoute, trips, places, setTab: goTab } = useStore()
   const [tab, setTab] = useState('discover')
   const [showCreate, setShowCreate] = useState(false)
   const [selected, setSelected] = useState(null)
@@ -77,11 +77,22 @@ export default function RoutesPage() {
 
         {tab === 'mine' && (
           <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <button onClick={() => setShowCreate(true)} style={{
-              width: '100%', padding: 16, background: 'var(--orange-wash)',
-              border: '1.5px dashed var(--orange-light)', borderRadius: 16,
-              color: 'var(--orange-deep)', fontSize: 15, fontWeight: 800, cursor: 'pointer',
-            }}>+ Create Route from Trip</button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowCreate(true)} style={{
+                flex: 1, padding: 16, background: 'var(--orange-wash)',
+                border: '1.5px dashed var(--orange-light)', borderRadius: 16,
+                color: 'var(--orange-deep)', fontSize: 14, fontWeight: 800, cursor: 'pointer',
+              }}>+ From Trip</button>
+              <button onClick={() => goTab('map')} style={{
+                flex: 1, padding: 16, background: 'var(--surface)',
+                border: '1.5px solid var(--border)', borderRadius: 16,
+                color: 'var(--text)', fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              }}>
+                <IconCompass size={16} color="var(--orange-deep)" sw={2} />
+                Draw on Map
+              </button>
+            </div>
             {myRoutes.length === 0 && (
               <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-mute)' }}>
                 <IconRoad size={40} color="rgba(0,0,0,0.18)" />

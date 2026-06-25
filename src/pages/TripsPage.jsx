@@ -103,7 +103,7 @@ export default function TripsPage() {
                 </div>
 
                 {/* Big stats footer — Strava style */}
-                <div style={{ display: 'flex', padding: '14px 16px 15px', gap: 0 }}>
+                <div style={{ display: 'flex', padding: '12px 16px 13px', gap: 0, alignItems: 'center' }}>
                   <StatBlock value={distKm >= 1 ? `${distKm.toFixed(1)}km` : `${Math.round((trip.distance||0))}m`} label="Distance" accent />
                   <StatDivider />
                   <StatBlock value={formatDuration(trip.duration || 0)} label="Time" />
@@ -114,7 +114,13 @@ export default function TripsPage() {
                     </>
                   )}
                   <div style={{ flex: 1 }} />
-                  <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-mute)', fontSize: 20, paddingLeft: 8 }}>›</div>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleShare(trip, places.filter(p => p.tripId === trip.id)) }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-mute)', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 5, borderRadius: 8 }}
+                  >
+                    <IconShare size={16} color="var(--text-mute)" sw={1.8} />
+                  </button>
+                  <div style={{ color: 'var(--text-mute)', fontSize: 20, paddingLeft: 4 }}>›</div>
                 </div>
               </div>
             )
