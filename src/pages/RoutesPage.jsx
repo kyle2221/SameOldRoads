@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
+import Reveal from '../components/Reveal'
 import { uid } from '../utils/uid'
 import { IconRoad, IconUtensils, IconPin, IconClock, IconFlag, IconCompass } from '../components/Icons'
 
@@ -69,8 +70,10 @@ export default function RoutesPage() {
 
         {tab === 'discover' && (
           <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {communityRoutes.map(r => (
-              <RouteCard key={r.id} route={r} onTap={() => setSelected(r)} onFollow={() => followRoute(r)} />
+            {communityRoutes.map((r, i) => (
+              <Reveal key={r.id} delay={Math.min(i, 6) * 60}>
+                <RouteCard route={r} onTap={() => setSelected(r)} onFollow={() => followRoute(r)} />
+              </Reveal>
             ))}
           </div>
         )}
@@ -99,8 +102,10 @@ export default function RoutesPage() {
                 <div style={{ fontSize: 14, lineHeight: 1.5, marginTop: 12 }}>No routes yet. Complete a trip and save it as a shareable route!</div>
               </div>
             )}
-            {myRoutes.map(r => (
-              <RouteCard key={r.id} route={r} onTap={() => setSelected(r)} onFollow={() => followRoute(r)} />
+            {myRoutes.map((r, i) => (
+              <Reveal key={r.id} delay={Math.min(i, 6) * 60}>
+                <RouteCard route={r} onTap={() => setSelected(r)} onFollow={() => followRoute(r)} />
+              </Reveal>
             ))}
           </div>
         )}

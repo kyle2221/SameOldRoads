@@ -3,6 +3,7 @@ import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
+import Reveal from '../components/Reveal'
 import { uid } from '../utils/uid'
 import {
   IconCar, IconClock, IconZap, IconUtensils, IconPin, IconShare, IconCheck, IconTrash,
@@ -53,17 +54,17 @@ export default function TripsPage() {
         )}
 
         <div style={{ padding: '16px 16px 0' }}>
-          {sorted.map(trip => {
+          {sorted.map((trip, idx) => {
             const rCount = places.filter(p => p.tripId === trip.id && p.type === 'restaurant').length
             const dCount = places.filter(p => p.tripId === trip.id && p.type === 'destination').length
             const distKm = (trip.distance || 0) / 1000
             return (
+              <Reveal key={trip.id} delay={Math.min(idx, 6) * 55} style={{ marginBottom: 16 }}>
               <div
-                key={trip.id}
                 className="pressable"
                 onClick={() => setSelected(trip.id)}
                 style={{
-                  background: 'var(--surface)', borderRadius: 22, marginBottom: 16,
+                  background: 'var(--surface)', borderRadius: 22,
                   border: '1px solid var(--border)', overflow: 'hidden',
                   boxShadow: 'var(--shadow-soft)',
                 }}
@@ -123,6 +124,7 @@ export default function TripsPage() {
                   <div style={{ color: 'var(--text-mute)', fontSize: 20, paddingLeft: 4 }}>›</div>
                 </div>
               </div>
+              </Reveal>
             )
           })}
         </div>

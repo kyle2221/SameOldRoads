@@ -4,6 +4,7 @@ import { formatDistance, formatDuration, formatDate, formatSpeed } from '../util
 import NodeBackground from '../components/NodeBackground'
 import RouteThumb from '../components/RouteThumb'
 import ProfileSheet from '../components/ProfileSheet'
+import Reveal from '../components/Reveal'
 import {
   IconCar, IconCompass, IconStar, IconFlag, IconRoad, IconTrophy,
   IconZap, IconClock, IconPin, IconUtensils, IconLock, IconFire,
@@ -138,46 +139,52 @@ export default function HomePage() {
 
         {/* Stats 2×2 grid — every card is a tap target */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '24px 16px 8px' }}>
-          {statCards.map(s => (
-            <button key={s.label} className="pressable" onClick={() => setTab(s.tab)} style={{
-              width: 'calc(50% - 5px)',
-              background: 'var(--surface)', borderRadius: 18,
-              padding: '16px 18px',
-              border: '1px solid var(--border)',
-              display: 'flex', alignItems: 'flex-start', gap: 13,
-              cursor: 'pointer', textAlign: 'left',
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <s.Icon size={18} color="var(--orange-deep)" sw={2} />
-              </div>
-              <div>
-                <div style={{
-                  fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
-                  fontFamily: "'Rajdhani', sans-serif",
-                  background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                }}>{s.value}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
-              </div>
-            </button>
+          {statCards.map((s, i) => (
+            <Reveal key={s.label} delay={i * 70} style={{ width: 'calc(50% - 5px)' }}>
+              <button className="pressable" onClick={() => setTab(s.tab)} style={{
+                width: '100%',
+                background: 'var(--surface)', borderRadius: 18,
+                padding: '16px 18px',
+                border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'flex-start', gap: 13,
+                cursor: 'pointer', textAlign: 'left',
+              }}>
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <s.Icon size={18} color="var(--orange-deep)" sw={2} />
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+                    fontFamily: "'Rajdhani', sans-serif",
+                    background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  }}>{s.value}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
+                </div>
+              </button>
+            </Reveal>
           ))}
         </div>
 
         {/* This Week */}
-        <ThisWeek trips={trips} onGoTrips={() => setTab('trips')} />
+        <Reveal delay={60}>
+          <ThisWeek trips={trips} onGoTrips={() => setTab('trips')} />
+        </Reveal>
 
         {/* Quick actions */}
-        <div style={{ padding: '16px 16px 20px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <QuickBtn Icon={IconCar}     label="Start Trip" sub="Track your route" onClick={() => setTab('map')}    accent />
-            <QuickBtn Icon={IconCompass} label="Explore"    sub="Find routes"      onClick={() => setTab('routes')} />
-            <QuickBtn Icon={IconStar}    label="Places"     sub="My saved spots"   onClick={() => setTab('places')} />
+        <Reveal>
+          <div style={{ padding: '16px 16px 20px' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <QuickBtn Icon={IconCar}     label="Start Trip" sub="Track your route" onClick={() => setTab('map')}    accent />
+              <QuickBtn Icon={IconCompass} label="Explore"    sub="Find routes"      onClick={() => setTab('routes')} />
+              <QuickBtn Icon={IconStar}    label="Places"     sub="My saved spots"   onClick={() => setTab('places')} />
+            </div>
           </div>
-        </div>
+        </Reveal>
 
         {/* Achievements */}
-        <div style={{ marginBottom: 26 }}>
+        <Reveal style={{ marginBottom: 26 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Achievements</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -212,25 +219,29 @@ export default function HomePage() {
               </div>
             )
           })()}
-        </div>
+        </Reveal>
 
         {/* Featured Routes */}
         {featuredRoutes.length > 0 && (
-          <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
-            <div style={{ display: 'flex', gap: 13, overflowX: 'auto', paddingBottom: 6, paddingLeft: 16, paddingRight: 16, scrollbarWidth: 'none' }}>
-              {featuredRoutes.map(route => (
-                <HomeRouteCard key={route.id} route={route} onFollow={() => followRoute(route)} onTap={() => setTab('routes')} />
-              ))}
-            </div>
-          </Section>
+          <Reveal>
+            <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
+              <div style={{ display: 'flex', gap: 13, overflowX: 'auto', paddingBottom: 6, paddingLeft: 16, paddingRight: 16, scrollbarWidth: 'none' }}>
+                {featuredRoutes.map(route => (
+                  <HomeRouteCard key={route.id} route={route} onFollow={() => followRoute(route)} onTap={() => setTab('routes')} />
+                ))}
+              </div>
+            </Section>
+          </Reveal>
         )}
 
         {/* Recent trips */}
         {recentTrips.length > 0 && (
           <Section title="Recent Trips" action="See all" onAction={() => setTab('trips')}>
             <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {recentTrips.map(trip => (
-                <TripCard key={trip.id} trip={trip} places={places} onClick={() => setTab('trips')} />
+              {recentTrips.map((trip, i) => (
+                <Reveal key={trip.id} delay={Math.min(i, 5) * 60}>
+                  <TripCard trip={trip} places={places} onClick={() => setTab('trips')} />
+                </Reveal>
               ))}
             </div>
           </Section>

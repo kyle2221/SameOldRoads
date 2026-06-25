@@ -6,6 +6,7 @@ import {
   IconHeart, IconCamera,
 } from '../components/Icons'
 import { fetchPlaceReviews } from '../utils/reviews'
+import Reveal from '../components/Reveal'
 
 export default function PlacesPage() {
   const { places, updatePlace, deletePlace, setFlyToPlace, setTab } = useStore()
@@ -106,19 +107,20 @@ export default function PlacesPage() {
               </div>
             </div>
           )}
-          {filtered.map(place => (
-            <PlaceCard
-              key={place.id}
-              place={place}
-              editing={editing === place.id}
-              editData={editData}
-              setEditData={setEditData}
-              onEdit={() => startEdit(place)}
-              onSave={saveEdit}
-              onCancel={() => setEditing(null)}
-              onDelete={() => deletePlace(place.id)}
-              onShowMap={() => { setFlyToPlace(place); setTab('map') }}
-            />
+          {filtered.map((place, i) => (
+            <Reveal key={place.id} delay={Math.min(i, 6) * 55}>
+              <PlaceCard
+                place={place}
+                editing={editing === place.id}
+                editData={editData}
+                setEditData={setEditData}
+                onEdit={() => startEdit(place)}
+                onSave={saveEdit}
+                onCancel={() => setEditing(null)}
+                onDelete={() => deletePlace(place.id)}
+                onShowMap={() => { setFlyToPlace(place); setTab('map') }}
+              />
+            </Reveal>
           ))}
         </div>
 
