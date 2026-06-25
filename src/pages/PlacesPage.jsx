@@ -3,7 +3,7 @@ import { useStore } from '../store'
 import {
   IconSearch, IconUtensils, IconPin, IconStar, IconEdit, IconTrash, IconCheck, IconX,
   IconCompass, IconPhone, IconGlobe, IconExternalLink, IconClock, IconChevronDown, IconChevronUp,
-  IconHeart,
+  IconHeart, IconCamera,
 } from '../components/Icons'
 import { fetchPlaceReviews } from '../utils/reviews'
 
@@ -202,15 +202,23 @@ function ReviewCard({ review }) {
 
 function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCancel, onDelete, onShowMap }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [review, setReview] = useState(null)
+  const [review, setReview] = useState(place.google || null)
+  const [loading, setLoading] = useState(!place.google)
   const [showReviews, setShowReviews] = useState(false)
   const PlaceIcon = place.type === 'restaurant' ? IconUtensils : IconPin
 
   useEffect(() => {
     let cancelled = false
-    fetchPlaceReviews(place.name, place.lat, place.lng).then(r => { if (!cancelled) setReview(r) })
+    setLoading(!place.google)
+    // Live Google data via SerpApi proxy; fall back to any embedded demo data
+    // so the feature is fully visible even with no key / offline.
+    fetchPlaceReviews(place.name, place.lat, place.lng).then(r => {
+      if (cancelled) return
+      setReview(r || place.google || null)
+      setLoading(false)
+    })
     return () => { cancelled = true }
-  }, [place.name, place.lat, place.lng])
+  }, [place.name, place.lat, place.lng, place.google])
 
   if (editing) {
     return (
@@ -271,15 +279,12 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
           {place.photo && (
             <img src={place.photo} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6) 100%)', pointerEvents: 'none' }} />
-          {/* Rating badge overlaid on photo */}
-          {review?.rating && (
-            <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '4px 10px' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
-                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-              </svg>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{review.rating.toFixed(1)}</span>
-              {review.reviews && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>({review.reviews.toLocaleString()})</span>}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.45) 100%)', pointerEvents: 'none' }} />
+          {/* Google photos badge */}
+          {hasPhotos && !place.photo && (
+            <div style={{ position: 'absolute', bottom: 10, right: 12, display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', borderRadius: 8, padding: '3px 9px' }}>
+              <IconCamera size={11} color="rgba(255,255,255,0.9)" sw={2} />
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>Google</span>
             </div>
           )}
         </div>
@@ -296,12 +301,21 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
               <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <PlaceIcon size={20} color="var(--orange-deep)" sw={1.8} />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)', lineHeight: 1.15 }}>{place.name}</div>
-                {!review && (
-                  <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 1 }}>Loading reviews…</div>
+                {/* Category · price — always visible when known */}
+                {(review?.category || review?.price) && (
+                  <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2, fontWeight: 600 }}>
+                    {[review.category, review.price].filter(Boolean).join(' · ')}
+                  </div>
                 )}
-                {review && !review.rating && (
+                {loading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                    <span className="rev-pulse" style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--orange-light)' }} />
+                    <span style={{ fontSize: 11, color: 'var(--text-mute)' }}>Fetching Google data…</span>
+                  </div>
+                )}
+                {!loading && review && !review.rating && (
                   <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 1 }}>No Google listing found</div>
                 )}
               </div>
@@ -311,8 +325,8 @@ function PlaceCard({ place, editing, editData, setEditData, onEdit, onSave, onCa
             </span>
           </div>
 
-          {/* Stars row (if no photo to show them on) */}
-          {review?.rating && !place.photo && !hasPhotos && (
+          {/* Star rating row — always shown when rating exists */}
+          {review?.rating && (
             <div style={{ paddingLeft: 49 }}>
               <StarRow rating={review.rating} count={review.reviews} />
             </div>
