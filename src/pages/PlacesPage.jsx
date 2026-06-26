@@ -102,9 +102,23 @@ export default function PlacesPage() {
                 ? <IconSearch size={40} color="rgba(0,0,0,0.18)" />
                 : <IconStar size={40} color="rgba(0,0,0,0.18)" />
               }
-              <div style={{ fontSize: 14, lineHeight: 1.5, marginTop: 12 }}>
-                {search ? 'No places match your search.' : 'No places saved yet. Tap the map while tracking to add one!'}
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginTop: 16, marginBottom: 8, fontFamily: "'Rajdhani', sans-serif" }}>
+                {search ? 'No matches found' : 'No places saved yet'}
               </div>
+              <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: search ? 0 : 24 }}>
+                {search ? 'Try a different search term.' : 'Start a trip and tap the map to pin restaurants and destinations.'}
+              </div>
+              {!search && (
+                <button onClick={() => setTab('map')} style={{
+                  padding: '13px 28px', borderRadius: 14,
+                  background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none',
+                  color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer',
+                  boxShadow: '0 5px 18px rgba(252,76,2,0.36)',
+                  fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
+                }}>
+                  Go to Map →
+                </button>
+              )}
             </div>
           )}
           {filtered.map((place, i) => (

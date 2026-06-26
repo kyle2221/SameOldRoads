@@ -70,6 +70,22 @@ export default function RoutesPage() {
 
         {tab === 'discover' && (
           <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {communityRoutes.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-mute)' }}>
+                <IconCompass size={44} color="rgba(0,0,0,0.18)" />
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginTop: 16, marginBottom: 8, fontFamily: "'Rajdhani', sans-serif" }}>No routes yet</div>
+                <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Create your own route or draw one on the map.</div>
+                <button onClick={() => setTab('mine')} style={{
+                  padding: '13px 28px', borderRadius: 14,
+                  background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none',
+                  color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer',
+                  boxShadow: '0 5px 18px rgba(252,76,2,0.36)',
+                  fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
+                }}>
+                  Create a Route →
+                </button>
+              </div>
+            )}
             {communityRoutes.map((r, i) => (
               <Reveal key={r.id} delay={Math.min(i, 6) * 60}>
                 <RouteCard route={r} onTap={() => setSelected(r)} onFollow={() => followRoute(r)} />
@@ -223,11 +239,11 @@ function RouteDetail({ route, onBack, onFollow }) {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(10,3,0,0.82) 100%)', pointerEvents: 'none' }} />
 
         <button onClick={onBack} style={{
-          position: 'absolute', top: 50, left: 16,
-          background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.18)', borderRadius: 12,
+          position: 'fixed', top: 50, left: 'max(16px, calc(50vw - 224px))',
+          background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+          border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12,
           color: '#fff', width: 38, height: 38, fontSize: 18, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500,
         }}>←</button>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
