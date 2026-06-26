@@ -7,7 +7,7 @@ import { geocodeSearch } from '../utils/geocode'
 import { uid } from '../utils/uid'
 import {
   IconCar, IconSearch, IconPin, IconCamera, IconUtensils, IconX,
-  IconRoad, IconCheck, IconTrash,
+  IconRoad, IconCheck, IconTrash, IconClock, IconFlag,
 } from '../components/Icons'
 
 export default function MapPage() {
@@ -41,6 +41,7 @@ export default function MapPage() {
   const [searchResults, setSearchResults] = useState([])
   const [searchLoading, setSearchLoading] = useState(false)
   const searchTimerRef = useRef(null)
+  const [tripSummary, setTripSummary] = useState(null) // {name, distance, duration, stops}
 
   // Route creator state
   const [drawMode, setDrawMode] = useState(false)
@@ -350,14 +351,26 @@ export default function MapPage() {
       navigator.geolocation.clearWatch(watchIdRef.current)
       watchIdRef.current = null
     }
+    const snapshotTrip = activeTrip
+    const snapshotPath = currentPath
+    const stops = places.filter(p => p.tripId === snapshotTrip?.id)
     setCurrentSpeed(0)
     setWeather(null)
     if (userMarkerRef.current) {
       userMarkerRef.current.remove()
       userMarkerRef.current = null
     }
+    const duration = snapshotTrip ? Date.now() - snapshotTrip.startTime : 0
     await stopTrip()
     setElapsed(0)
+    if (snapshotTrip) {
+      setTripSummary({
+        name: snapshotTrip.name,
+        distance: snapshotTrip.distance || 0,
+        duration,
+        stops: stops.length,
+      })
+    }
   }
 
   function handlePhoto(e) {
@@ -662,6 +675,77 @@ export default function MapPage() {
           )}
           <button onClick={handleSavePlace} style={primaryBtn}>Save Place</button>
         </Modal>
+      )}
+
+      {/* Trip complete summary */}
+      {tripSummary && (
+        <div style={{
+          position: 'absolute', inset: 0, background: 'rgba(10,5,0,0.6)', zIndex: 2000,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center', backdropFilter: 'blur(4px)',
+        }}>
+          <div style={{
+            width: '100%', background: 'var(--surface)',
+            borderRadius: '28px 28px 0 0',
+            padding: '22px 22px calc(24px + env(safe-area-inset-bottom,0px))',
+            boxShadow: '0 -16px 60px rgba(0,0,0,0.5)',
+            animation: 'sheetUp 0.38s cubic-bezier(0.22,1,0.36,1)',
+          }}>
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 4, margin: '0 auto 20px' }} />
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: 22 }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 60, height: 60, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ff8a52, #fc4c02)',
+                boxShadow: '0 8px 28px rgba(252,76,2,0.4)',
+                marginBottom: 14,
+              }}>
+                <IconCheck size={28} color="#fff" sw={2.5} />
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginBottom: 5 }}>Trip Complete</div>
+              <h2 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: 'var(--text)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: -0.3, lineHeight: 1 }}>
+                {tripSummary.name}
+              </h2>
+            </div>
+
+            {/* Stats row */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {[
+                { label: 'Distance', value: formatDistance(tripSummary.distance) },
+                { label: 'Duration', value: formatDuration(tripSummary.duration) },
+                { label: 'Stops',    value: tripSummary.stops },
+              ].map(s => (
+                <div key={s.label} style={{ flex: 1, background: 'var(--surface-2)', borderRadius: 16, padding: '13px 8px', textAlign: 'center', border: '1px solid var(--border)' }}>
+                  <div style={{
+                    fontSize: 24, fontWeight: 900, letterSpacing: -0.3, lineHeight: 1,
+                    fontFamily: "'Rajdhani', sans-serif",
+                    background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  }}>{s.value}</div>
+                  <div style={{ fontSize: 9, color: 'var(--text-mute)', fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif", marginTop: 3 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => { setTripSummary(null); setTab('trips') }}
+                style={{ flex: 1, padding: 15, borderRadius: 16, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5 }}
+              >
+                View Trips
+              </button>
+              <button
+                onClick={() => setTripSummary(null)}
+                style={{ flex: 1.4, padding: 15, borderRadius: 16, background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none', color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer', boxShadow: '0 6px 20px rgba(252,76,2,0.38)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5 }}
+              >
+                Awesome! →
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
