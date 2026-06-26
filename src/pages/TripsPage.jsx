@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import RouteMap from '../components/RouteMap'
@@ -10,8 +10,15 @@ import {
 } from '../components/Icons'
 
 export default function TripsPage() {
-  const { trips, places, deleteTrip, saveOwnRoute } = useStore()
+  const { trips, places, deleteTrip, saveOwnRoute, pendingTripId, clearPendingTrip } = useStore()
   const [selected, setSelected] = useState(null)
+
+  useEffect(() => {
+    if (pendingTripId) {
+      setSelected(pendingTripId)
+      clearPendingTrip()
+    }
+  }, [pendingTripId, clearPendingTrip])
 
   const sorted = [...trips].sort((a, b) => b.createdAt - a.createdAt)
 

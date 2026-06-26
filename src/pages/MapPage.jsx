@@ -7,7 +7,7 @@ import { geocodeSearch } from '../utils/geocode'
 import { uid } from '../utils/uid'
 import {
   IconCar, IconSearch, IconPin, IconCamera, IconUtensils, IconX,
-  IconRoad, IconCheck, IconTrash, IconClock, IconFlag,
+  IconRoad, IconCheck, IconTrash, IconClock, IconFlag, IconLocate,
 } from '../components/Icons'
 
 export default function MapPage() {
@@ -280,6 +280,16 @@ export default function MapPage() {
     cancelDraw()
     setTab('routes')
   }
+
+  // One-time position peek so the locate button appears immediately
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      pos => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { timeout: 5000, maximumAge: 30000 }
+    )
+  }, [])
 
   // Elapsed timer
   useEffect(() => {
@@ -563,6 +573,22 @@ export default function MapPage() {
             Stop
           </button>
         </div>
+      )}
+
+      {/* Locate-me button */}
+      {!trackingActive && !drawMode && userPos && (
+        <button
+          onClick={() => mapInstanceRef.current?.setView([userPos.lat, userPos.lng], 15, { animate: true })}
+          style={{
+            position: 'absolute', bottom: 100, right: 16, zIndex: 1000,
+            width: 44, height: 44, borderRadius: 14,
+            background: 'rgba(14,8,4,0.88)', backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(252,76,2,0.35)', boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}
+        >
+          <IconLocate size={19} color="#fc4c02" sw={2} />
+        </button>
       )}
 
       {/* Bottom action buttons — not tracking, not drawing */}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import NodeBackground from '../components/NodeBackground'
@@ -44,7 +44,7 @@ function getStreak(trips) {
 }
 
 export default function HomePage() {
-  const { trips, places, routes, setTab, followRoute, currentUser, logout, importHealthTrips } = useStore()
+  const { trips, places, routes, setTab, openTrip, followRoute, currentUser, logout, importHealthTrips } = useStore()
   const [showProfile, setShowProfile] = useState(false)
   const [expandedAchievement, setExpandedAchievement] = useState(null)
 
@@ -141,27 +141,7 @@ export default function HomePage() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '24px 16px 8px' }}>
           {statCards.map((s, i) => (
             <Reveal key={s.label} delay={i * 70} style={{ width: 'calc(50% - 5px)' }}>
-              <button className="pressable" onClick={() => setTab(s.tab)} style={{
-                width: '100%',
-                background: 'var(--surface)', borderRadius: 18,
-                padding: '16px 18px',
-                border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'flex-start', gap: 13,
-                cursor: 'pointer', textAlign: 'left',
-              }}>
-                <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <s.Icon size={18} color="var(--orange-deep)" sw={2} />
-                </div>
-                <div>
-                  <div style={{
-                    fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
-                    fontFamily: "'Rajdhani', sans-serif",
-                    background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                  }}>{s.value}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
-                </div>
-              </button>
+              <StatCard stat={s} onTap={() => setTab(s.tab)} />
             </Reveal>
           ))}
         </div>
@@ -240,7 +220,7 @@ export default function HomePage() {
             <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {recentTrips.map((trip, i) => (
                 <Reveal key={trip.id} delay={Math.min(i, 5) * 60}>
-                  <TripCard trip={trip} places={places} onClick={() => setTab('trips')} />
+                  <TripCard trip={trip} places={places} onClick={() => openTrip(trip.id)} />
                 </Reveal>
               ))}
             </div>
@@ -282,6 +262,52 @@ export default function HomePage() {
         />
       )}
     </div>
+  )
+}
+
+function useCountUp(target, duration = 900) {
+  const [val, setVal] = useState(0)
+  const rafRef = useRef(null)
+  useEffect(() => {
+    if (target === 0) { setVal(0); return }
+    const start = performance.now()
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / duration)
+      // Ease-out quart
+      const ease = 1 - Math.pow(1 - p, 4)
+      setVal(Math.round(ease * target))
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [target, duration])
+  return val
+}
+
+function StatCard({ stat, onTap }) {
+  const animated = useCountUp(stat.value)
+  return (
+    <button className="pressable" onClick={onTap} style={{
+      width: '100%',
+      background: 'var(--surface)', borderRadius: 18,
+      padding: '16px 18px',
+      border: '1px solid var(--border)',
+      display: 'flex', alignItems: 'flex-start', gap: 13,
+      cursor: 'pointer', textAlign: 'left',
+    }}>
+      <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <stat.Icon size={18} color="var(--orange-deep)" sw={2} />
+      </div>
+      <div>
+        <div style={{
+          fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+          fontFamily: "'Rajdhani', sans-serif",
+          background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        }}>{animated}</div>
+        <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{stat.label}</div>
+      </div>
+    </button>
   )
 }
 

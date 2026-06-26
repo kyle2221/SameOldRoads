@@ -16,6 +16,7 @@ export const useStore = create((set, get) => ({
   selectedRoute: null,
   followingRoute: null,
   flyToPlace: null,
+  pendingTripId: null,
   toasts: [],
 
   setUser: (user) => set({ currentUser: user }),
@@ -50,6 +51,8 @@ export const useStore = create((set, get) => ({
   },
 
   setTab: (tab) => set({ activeTab: tab }),
+  openTrip: (tripId) => set({ activeTab: 'trips', pendingTripId: tripId }),
+  clearPendingTrip: () => set({ pendingTripId: null }),
 
   startTrip: async (name) => {
     const trip = {

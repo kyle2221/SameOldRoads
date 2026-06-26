@@ -263,3 +263,11 @@ export const IconSparkle = ({ size = 24, color = 'currentColor', sw = 1.8 }) => 
     <path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75z" />
   </svg>
 )
+
+export const IconLocate = ({ size = 24, color = 'currentColor', sw = 1.8 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+    <circle cx="12" cy="12" r="8" />
+  </svg>
+)
