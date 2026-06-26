@@ -1,16 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import RouteMap from '../components/RouteMap'
 import RouteThumb from '../components/RouteThumb'
+import Reveal from '../components/Reveal'
 import { uid } from '../utils/uid'
 import {
   IconCar, IconClock, IconZap, IconUtensils, IconPin, IconShare, IconCheck, IconTrash,
 } from '../components/Icons'
 
 export default function TripsPage() {
-  const { trips, places, deleteTrip, saveOwnRoute } = useStore()
+  const { trips, places, deleteTrip, saveOwnRoute, pendingTripId, clearPendingTrip, setTab } = useStore()
   const [selected, setSelected] = useState(null)
+
+  useEffect(() => {
+    if (pendingTripId) {
+      setSelected(pendingTripId)
+      clearPendingTrip()
+    }
+  }, [pendingTripId, clearPendingTrip])
 
   const sorted = [...trips].sort((a, b) => b.createdAt - a.createdAt)
 
@@ -46,24 +54,34 @@ export default function TripsPage() {
 
       <div className="hero-to-content">
         {sorted.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '70px 24px', color: 'var(--text-mute)' }}>
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-mute)' }}>
             <IconClock size={44} color="rgba(0,0,0,0.2)" />
-            <div style={{ fontSize: 14, lineHeight: 1.5, marginTop: 14 }}>No trips yet. Head to the Track tab to start your first journey!</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginTop: 16, marginBottom: 8, fontFamily: "'Rajdhani', sans-serif" }}>No trips recorded yet</div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>Start tracking your first journey on the map.</div>
+            <button onClick={() => setTab('map')} style={{
+              padding: '14px 32px', borderRadius: 16,
+              background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none',
+              color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(252,76,2,0.38)',
+              fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
+            }}>
+              Start a Trip →
+            </button>
           </div>
         )}
 
         <div style={{ padding: '16px 16px 0' }}>
-          {sorted.map(trip => {
+          {sorted.map((trip, idx) => {
             const rCount = places.filter(p => p.tripId === trip.id && p.type === 'restaurant').length
             const dCount = places.filter(p => p.tripId === trip.id && p.type === 'destination').length
             const distKm = (trip.distance || 0) / 1000
             return (
+              <Reveal key={trip.id} delay={Math.min(idx, 6) * 55} style={{ marginBottom: 16 }}>
               <div
-                key={trip.id}
                 className="pressable"
                 onClick={() => setSelected(trip.id)}
                 style={{
-                  background: 'var(--surface)', borderRadius: 22, marginBottom: 16,
+                  background: 'var(--surface)', borderRadius: 22,
                   border: '1px solid var(--border)', overflow: 'hidden',
                   boxShadow: 'var(--shadow-soft)',
                 }}
@@ -103,7 +121,7 @@ export default function TripsPage() {
                 </div>
 
                 {/* Big stats footer — Strava style */}
-                <div style={{ display: 'flex', padding: '14px 16px 15px', gap: 0 }}>
+                <div style={{ display: 'flex', padding: '12px 16px 13px', gap: 0, alignItems: 'center' }}>
                   <StatBlock value={distKm >= 1 ? `${distKm.toFixed(1)}km` : `${Math.round((trip.distance||0))}m`} label="Distance" accent />
                   <StatDivider />
                   <StatBlock value={formatDuration(trip.duration || 0)} label="Time" />
@@ -114,9 +132,16 @@ export default function TripsPage() {
                     </>
                   )}
                   <div style={{ flex: 1 }} />
-                  <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-mute)', fontSize: 20, paddingLeft: 8 }}>›</div>
+                  <button
+                    onClick={e => { e.stopPropagation(); handleShare(trip, places.filter(p => p.tripId === trip.id)) }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-mute)', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: 5, borderRadius: 8 }}
+                  >
+                    <IconShare size={16} color="var(--text-mute)" sw={1.8} />
+                  </button>
+                  <div style={{ color: 'var(--text-mute)', fontSize: 20, paddingLeft: 4 }}>›</div>
                 </div>
               </div>
+              </Reveal>
             )
           })}
         </div>
@@ -207,7 +232,7 @@ function TripDetail({ trip, places, onBack, onDelete, onSaveRoute }) {
           />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(10,3,0,0.82) 100%)', pointerEvents: 'none' }} />
-        <button onClick={onBack} style={{ position: 'absolute', top: 50, left: 16, background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 12, color: '#fff', width: 38, height: 38, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>←</button>
+        <button onClick={onBack} style={{ position: 'fixed', top: 50, left: 'max(16px, calc(50vw - 224px))', background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff', width: 38, height: 38, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500 }}>←</button>
 
         <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, zIndex: 1 }}>
           <div style={{ fontSize: 10, color: 'rgba(255,200,140,0.6)', fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8, fontFamily: "'Rajdhani', sans-serif" }}>Trip</div>

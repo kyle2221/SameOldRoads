@@ -7,6 +7,7 @@ import RoutesPage from './pages/RoutesPage'
 import PlacesPage from './pages/PlacesPage'
 import TripsPage from './pages/TripsPage'
 import AuthPage from './pages/AuthPage'
+import Toasts from './components/Toast'
 
 export default function App() {
   const { loadAll, activeTab, currentUser, setUser } = useStore()
@@ -20,13 +21,14 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 0 80px rgba(0,0,0,0.14)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', boxShadow: '0 0 80px rgba(0,0,0,0.14)', position: 'relative' }}>
+      <Toasts />
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ display: activeTab === 'home' ? 'block' : 'none', height: '100%' }}><HomePage /></div>
-        <div style={{ display: activeTab === 'map' ? 'block' : 'none', height: '100%' }}><MapPage /></div>
-        <div style={{ display: activeTab === 'routes' ? 'block' : 'none', height: '100%' }}><RoutesPage /></div>
-        <div style={{ display: activeTab === 'places' ? 'block' : 'none', height: '100%' }}><PlacesPage /></div>
-        <div style={{ display: activeTab === 'trips' ? 'block' : 'none', height: '100%' }}><TripsPage /></div>
+        <div className={`tab-page${activeTab === 'home' ? ' active' : ''}`}><HomePage /></div>
+        <div className={`tab-page${activeTab === 'map' ? ' active' : ''}`}><MapPage /></div>
+        <div className={`tab-page${activeTab === 'routes' ? ' active' : ''}`}><RoutesPage /></div>
+        <div className={`tab-page${activeTab === 'places' ? ' active' : ''}`}><PlacesPage /></div>
+        <div className={`tab-page${activeTab === 'trips' ? ' active' : ''}`}><TripsPage /></div>
       </div>
       <NavBar />
     </div>

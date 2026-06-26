@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../store'
 import { formatDistance, formatDuration, formatDate, formatSpeed } from '../utils/format'
 import NodeBackground from '../components/NodeBackground'
 import RouteThumb from '../components/RouteThumb'
 import ProfileSheet from '../components/ProfileSheet'
+import Reveal from '../components/Reveal'
 import {
   IconCar, IconCompass, IconStar, IconFlag, IconRoad, IconTrophy,
-  IconZap, IconClock, IconPin, IconUtensils, IconLock,
+  IconZap, IconClock, IconPin, IconUtensils, IconLock, IconFire,
+  IconSparkle, IconInfo,
 } from '../components/Icons'
 
 function getTimeGreeting() {
@@ -18,9 +20,33 @@ function getTimeGreeting() {
   return 'Late-night run?'
 }
 
+function getStreak(trips) {
+  if (!trips.length) return 0
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  let streak = 0
+  let check = today.getTime()
+  const sorted = [...trips].sort((a, b) => b.createdAt - a.createdAt)
+  for (let i = 0; i < 30; i++) {
+    const hasActivity = sorted.some(t => {
+      const d = new Date(t.createdAt); d.setHours(0, 0, 0, 0)
+      return d.getTime() === check
+    })
+    if (hasActivity) {
+      streak++
+      check -= 86400000
+    } else if (i === 0) {
+      check -= 86400000 // allow gap for today not yet active
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
 export default function HomePage() {
-  const { trips, places, routes, setTab, followRoute, currentUser, logout, importHealthTrips } = useStore()
+  const { trips, places, routes, setTab, openTrip, followRoute, currentUser, logout, importHealthTrips } = useStore()
   const [showProfile, setShowProfile] = useState(false)
+  const [expandedAchievement, setExpandedAchievement] = useState(null)
 
   const recentTrips = [...trips].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3)
   const totalDist = trips.reduce((s, t) => s + (t.distance || 0), 0)
@@ -32,15 +58,25 @@ export default function HomePage() {
   const greetText = getTimeGreeting()
   const featuredRoutes = routes.filter(r => !r.isOwn)
   const totalMiles = Math.round(totalDist / 1609.34)
+  const streak = getStreak(trips)
 
   const achievements = [
-    { Icon: IconFlag,     label: 'First Trip',  sub: 'Hit the road', unlocked: trips.length >= 1 },
-    { Icon: IconCompass,  label: 'Trailblazer', sub: '3 trips',       unlocked: trips.length >= 3 },
-    { Icon: IconTrophy,   label: 'Century',     sub: '100 miles',     unlocked: totalMiles >= 100 },
-    { Icon: IconUtensils, label: 'Foodie',      sub: '3 eats',        unlocked: restaurants.length >= 3 },
-    { Icon: IconStar,     label: 'Explorer',    sub: '5 spots',       unlocked: places.length >= 5 },
+    { Icon: IconFlag,     label: 'First Trip',   sub: '1 trip',     unlocked: trips.length >= 1,        need: 'Complete your first trip' },
+    { Icon: IconCompass,  label: 'Trailblazer',  sub: '3 trips',    unlocked: trips.length >= 3,        need: '3 trips total' },
+    { Icon: IconTrophy,   label: 'Century',      sub: '100 miles',  unlocked: totalMiles >= 100,        need: 'Log 100 total miles' },
+    { Icon: IconFire,     label: 'On Fire',      sub: '3-day streak', unlocked: streak >= 3,            need: '3 active days in a row' },
+    { Icon: IconUtensils, label: 'Foodie',       sub: '3 eats',     unlocked: restaurants.length >= 3,  need: 'Save 3 restaurants' },
+    { Icon: IconStar,     label: 'Explorer',     sub: '5 spots',    unlocked: places.length >= 5,       need: 'Save 5 places total' },
+    { Icon: IconRoad,     label: 'Road Warrior', sub: '500 miles',  unlocked: totalMiles >= 500,        need: 'Log 500 total miles' },
   ]
   const unlockedCount = achievements.filter(a => a.unlocked).length
+
+  const statCards = [
+    { Icon: IconFlag,     label: 'Trips',  value: trips.length,         tab: 'trips',  accent: false },
+    { Icon: IconRoad,     label: 'Miles',  value: totalMiles,           tab: 'trips',  accent: true  },
+    { Icon: IconUtensils, label: 'Food',   value: restaurants.length,   tab: 'places', accent: false },
+    { Icon: IconPin,      label: 'Spots',  value: destinations.length,  tab: 'places', accent: false },
+  ]
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', background: 'var(--bg)' }}>
@@ -62,19 +98,27 @@ export default function HomePage() {
             <IconRoad size={18} color="rgba(255,200,120,0.8)" sw={2} />
             <span style={{ fontSize: 11, letterSpacing: 3, color: 'rgba(255,255,255,0.55)', fontWeight: 800, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>Same Old Roads</span>
           </div>
-          <button
-            onClick={() => setShowProfile(p => !p)}
-            style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
-              border: '2px solid rgba(255,255,255,0.25)', color: '#fff',
-              fontSize: 13, fontWeight: 800, cursor: 'pointer',
-              boxShadow: '0 2px 12px rgba(239,86,22,0.5)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            {initials}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {streak >= 2 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(252,76,2,0.25)', borderRadius: 20, padding: '4px 10px', border: '1px solid rgba(252,76,2,0.4)' }}>
+                <IconFire size={13} color="#ff8a52" sw={2} />
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#ff8a52', fontFamily: "'Rajdhani', sans-serif" }}>{streak}</span>
+              </div>
+            )}
+            <button
+              onClick={() => setShowProfile(p => !p)}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ff8a52, #ef5616)',
+                border: '2px solid rgba(255,255,255,0.25)', color: '#fff',
+                fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(239,86,22,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {initials}
+            </button>
+          </div>
         </div>
 
         <div style={{ position: 'relative', zIndex: 2, flex: 1 }}>
@@ -90,81 +134,94 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* White content area with orange bleed at top */}
+      {/* Content */}
       <div className="hero-to-content">
 
-        {/* Stats 2×2 grid */}
+        {/* Stats 2×2 grid — every card is a tap target */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '24px 16px 8px' }}>
-          {[
-            { Icon: IconFlag,     label: 'Trips',  value: trips.length },
-            { Icon: IconRoad,     label: 'Miles',  value: totalMiles },
-            { Icon: IconUtensils, label: 'Food',   value: restaurants.length },
-            { Icon: IconPin,      label: 'Spots',  value: destinations.length },
-          ].map(s => (
-            <div key={s.label} style={{
-              width: 'calc(50% - 5px)',
-              background: 'var(--surface)', borderRadius: 18,
-              padding: '16px 18px',
-              border: '1px solid var(--border)',
-              display: 'flex', alignItems: 'flex-start', gap: 13,
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <s.Icon size={18} color="var(--orange-deep)" sw={2} />
-              </div>
-              <div>
-                <div style={{
-                  fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
-                  fontFamily: "'Rajdhani', sans-serif",
-                  background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                }}>{s.value}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{s.label}</div>
-              </div>
-            </div>
+          {statCards.map((s, i) => (
+            <Reveal key={s.label} delay={i * 70} style={{ width: 'calc(50% - 5px)' }}>
+              <StatCard stat={s} onTap={() => setTab(s.tab)} />
+            </Reveal>
           ))}
         </div>
 
         {/* This Week */}
-        <ThisWeek trips={trips} />
+        <Reveal delay={60}>
+          <ThisWeek trips={trips} onGoTrips={() => setTab('trips')} />
+        </Reveal>
 
         {/* Quick actions */}
-        <div style={{ padding: '16px 16px 20px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <QuickBtn Icon={IconCar}     label="Start Trip" sub="Track your route" onClick={() => setTab('map')}    accent />
-            <QuickBtn Icon={IconCompass} label="Explore"    sub="Find routes"      onClick={() => setTab('routes')} />
-            <QuickBtn Icon={IconStar}    label="Places"     sub="My saved spots"   onClick={() => setTab('places')} />
+        <Reveal>
+          <div style={{ padding: '16px 16px 20px' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12, fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Quick Start</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <QuickBtn Icon={IconCar}     label="Start Trip" sub="Track your route" onClick={() => setTab('map')}    accent />
+              <QuickBtn Icon={IconCompass} label="Explore"    sub="Find routes"      onClick={() => setTab('routes')} />
+              <QuickBtn Icon={IconStar}    label="Places"     sub="My saved spots"   onClick={() => setTab('places')} />
+            </div>
           </div>
-        </div>
+        </Reveal>
 
         {/* Achievements */}
-        <div style={{ marginBottom: 26 }}>
+        <Reveal style={{ marginBottom: 26 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px', marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: 'var(--text-mute)', letterSpacing: 2.5, textTransform: 'uppercase', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>Achievements</div>
-            <div style={{ fontSize: 12, color: 'var(--orange-deep)', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>{unlockedCount}/{achievements.length}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 12, color: 'var(--orange-deep)', fontWeight: 800, fontFamily: "'Rajdhani', sans-serif" }}>{unlockedCount}/{achievements.length}</div>
+              {unlockedCount === achievements.length && <IconSparkle size={14} color="var(--orange-deep)" sw={2} />}
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '0 16px 4px', scrollbarWidth: 'none' }}>
-            {achievements.map(a => <Badge key={a.label} {...a} />)}
+            {achievements.map(a => (
+              <Badge
+                key={a.label}
+                {...a}
+                expanded={expandedAchievement === a.label}
+                onTap={() => setExpandedAchievement(v => v === a.label ? null : a.label)}
+              />
+            ))}
           </div>
-        </div>
+          {expandedAchievement && (() => {
+            const a = achievements.find(x => x.label === expandedAchievement)
+            if (!a) return null
+            return (
+              <div style={{ margin: '10px 16px 0', background: 'var(--surface)', borderRadius: 14, padding: '12px 14px', border: `1px solid ${a.unlocked ? 'var(--orange-tint)' : 'var(--border)'}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {a.unlocked
+                    ? <IconSparkle size={15} color="var(--orange-deep)" sw={2} />
+                    : <IconInfo size={15} color="var(--text-mute)" sw={2} />
+                  }
+                  <span style={{ fontSize: 13, fontWeight: 700, color: a.unlocked ? 'var(--orange-deep)' : 'var(--text-soft)' }}>
+                    {a.unlocked ? `${a.label} unlocked!` : `Unlock: ${a.need}`}
+                  </span>
+                </div>
+              </div>
+            )
+          })()}
+        </Reveal>
 
         {/* Featured Routes */}
         {featuredRoutes.length > 0 && (
-          <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
-            <div style={{ display: 'flex', gap: 13, overflowX: 'auto', paddingBottom: 6, paddingLeft: 16, paddingRight: 16, scrollbarWidth: 'none' }}>
-              {featuredRoutes.map(route => (
-                <HomeRouteCard key={route.id} route={route} onFollow={() => followRoute(route)} />
-              ))}
-            </div>
-          </Section>
+          <Reveal>
+            <Section title="Featured Routes" action="See all" onAction={() => setTab('routes')}>
+              <div style={{ display: 'flex', gap: 13, overflowX: 'auto', paddingBottom: 6, paddingLeft: 16, paddingRight: 16, scrollbarWidth: 'none' }}>
+                {featuredRoutes.map(route => (
+                  <HomeRouteCard key={route.id} route={route} onFollow={() => followRoute(route)} onTap={() => setTab('routes')} />
+                ))}
+              </div>
+            </Section>
+          </Reveal>
         )}
 
         {/* Recent trips */}
         {recentTrips.length > 0 && (
           <Section title="Recent Trips" action="See all" onAction={() => setTab('trips')}>
             <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {recentTrips.map(trip => (
-                <TripCard key={trip.id} trip={trip} places={places} onClick={() => setTab('trips')} />
+              {recentTrips.map((trip, i) => (
+                <Reveal key={trip.id} delay={Math.min(i, 5) * 60}>
+                  <TripCard trip={trip} places={places} onClick={() => openTrip(trip.id)} />
+                </Reveal>
               ))}
             </div>
           </Section>
@@ -176,9 +233,18 @@ export default function HomePage() {
               <IconRoad size={52} color="rgba(0,0,0,0.15)" />
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Start your first adventure</div>
-            <div style={{ fontSize: 14, color: 'var(--text-mute)', lineHeight: 1.6, maxWidth: 260, margin: '0 auto' }}>
+            <div style={{ fontSize: 14, color: 'var(--text-mute)', lineHeight: 1.6, maxWidth: 260, margin: '0 auto 20px' }}>
               Tap Track to begin recording your journey.
             </div>
+            <button className="pressable" onClick={() => setTab('map')} style={{
+              padding: '14px 32px', borderRadius: 16,
+              background: 'linear-gradient(135deg, #ff8a52, #fc4c02)', border: 'none',
+              color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer',
+              boxShadow: '0 6px 20px rgba(252,76,2,0.38)',
+              fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.5,
+            }}>
+              Start Tracking →
+            </button>
           </div>
         )}
 
@@ -199,6 +265,52 @@ export default function HomePage() {
   )
 }
 
+function useCountUp(target, duration = 900) {
+  const [val, setVal] = useState(0)
+  const rafRef = useRef(null)
+  useEffect(() => {
+    if (target === 0) { setVal(0); return }
+    const start = performance.now()
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / duration)
+      // Ease-out quart
+      const ease = 1 - Math.pow(1 - p, 4)
+      setVal(Math.round(ease * target))
+      if (p < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [target, duration])
+  return val
+}
+
+function StatCard({ stat, onTap }) {
+  const animated = useCountUp(stat.value)
+  return (
+    <button className="pressable" onClick={onTap} style={{
+      width: '100%',
+      background: 'var(--surface)', borderRadius: 18,
+      padding: '16px 18px',
+      border: '1px solid var(--border)',
+      display: 'flex', alignItems: 'flex-start', gap: 13,
+      cursor: 'pointer', textAlign: 'left',
+    }}>
+      <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--orange-wash)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <stat.Icon size={18} color="var(--orange-deep)" sw={2} />
+      </div>
+      <div>
+        <div style={{
+          fontSize: 32, fontWeight: 900, letterSpacing: -1, lineHeight: 1,
+          fontFamily: "'Rajdhani', sans-serif",
+          background: 'linear-gradient(135deg, #ff8a52, #e84d0e)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        }}>{animated}</div>
+        <div style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 700, marginTop: 3, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Rajdhani', sans-serif" }}>{stat.label}</div>
+      </div>
+    </button>
+  )
+}
+
 function QuickBtn({ Icon, label, sub, onClick, accent }) {
   return (
     <button className="pressable" onClick={onClick} style={{
@@ -208,6 +320,7 @@ function QuickBtn({ Icon, label, sub, onClick, accent }) {
       borderRadius: 18, color: accent ? '#fff' : 'var(--text)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
       boxShadow: accent ? '0 6px 22px rgba(239,86,22,0.36)' : 'none',
+      cursor: 'pointer',
     }}>
       <Icon size={24} color={accent ? '#fff' : 'var(--orange)'} sw={1.8} />
       <div>
@@ -218,14 +331,21 @@ function QuickBtn({ Icon, label, sub, onClick, accent }) {
   )
 }
 
-function Badge({ Icon, label, sub, unlocked }) {
+function Badge({ Icon, label, sub, unlocked, expanded, onTap, need }) {
   return (
-    <div style={{
+    <button className="pressable" onClick={onTap} style={{
       minWidth: 90, flexShrink: 0, borderRadius: 18, padding: '14px 10px 12px',
       textAlign: 'center',
-      background: unlocked ? 'linear-gradient(160deg, #fff4ec, #ffe6d4)' : 'var(--surface)',
-      border: `1px solid ${unlocked ? 'var(--orange-tint)' : 'var(--border)'}`,
-      opacity: unlocked ? 1 : 0.5,
+      background: unlocked
+        ? expanded
+          ? 'linear-gradient(160deg, #ffe6d4, #ffd4b8)'
+          : 'linear-gradient(160deg, #fff4ec, #ffe6d4)'
+        : 'var(--surface)',
+      border: `1px solid ${unlocked ? (expanded ? 'var(--orange)' : 'var(--orange-tint)') : 'var(--border)'}`,
+      opacity: unlocked ? 1 : 0.55,
+      cursor: 'pointer',
+      boxShadow: unlocked && expanded ? '0 4px 16px rgba(252,76,2,0.18)' : 'none',
+      transition: 'all 0.15s ease',
     }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 7 }}>
         {unlocked
@@ -235,7 +355,7 @@ function Badge({ Icon, label, sub, unlocked }) {
       </div>
       <div style={{ fontSize: 11, fontWeight: 800, color: unlocked ? 'var(--orange-deep)' : 'var(--text-mute)', fontFamily: "'Rajdhani', sans-serif", textTransform: 'uppercase', letterSpacing: 0.4, lineHeight: 1.1 }}>{label}</div>
       <div style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--text-mute)', marginTop: 2, letterSpacing: 0.3 }}>{sub}</div>
-    </div>
+    </button>
   )
 }
 
@@ -255,9 +375,9 @@ function Section({ title, action, onAction, children }) {
   )
 }
 
-function HomeRouteCard({ route, onFollow }) {
+function HomeRouteCard({ route, onFollow, onTap }) {
   return (
-    <div className="pressable" style={{ minWidth: 220, borderRadius: 20, overflow: 'hidden', flexShrink: 0, background: '#180800', boxShadow: '0 4px 20px rgba(0,0,0,0.14)' }}>
+    <button className="pressable" onClick={onTap} style={{ minWidth: 220, borderRadius: 20, overflow: 'hidden', flexShrink: 0, background: '#180800', boxShadow: '0 4px 20px rgba(0,0,0,0.14)', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
       <div style={{
         height: 124, position: 'relative', overflow: 'hidden',
         background: `linear-gradient(150deg, #180800 0%, ${route.coverColor || '#ff7a3c'} 100%)`,
@@ -279,7 +399,7 @@ function HomeRouteCard({ route, onFollow }) {
         </div>
       </div>
       <div style={{ padding: '10px 12px' }}>
-        <button onClick={onFollow} style={{
+        <button onClick={e => { e.stopPropagation(); onFollow() }} style={{
           width: '100%', padding: '9px 0',
           background: 'var(--orange-wash)', border: '1px solid var(--orange-tint)',
           borderRadius: 11, color: 'var(--orange-deep)', fontSize: 12, fontWeight: 800, cursor: 'pointer',
@@ -287,21 +407,18 @@ function HomeRouteCard({ route, onFollow }) {
           Follow Route →
         </button>
       </div>
-    </div>
+    </button>
   )
 }
 
-function ThisWeek({ trips }) {
+function ThisWeek({ trips, onGoTrips }) {
   const DAY_LABELS = ['S','M','T','W','T','F','S']
   const today = new Date()
-  const todayDay = today.getDay() // 0=Sun
-  // Build 7-day window ending today
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today)
     d.setDate(today.getDate() - (6 - i))
     return d
   })
-  // Sum distance per day
   const distByDay = days.map(d => {
     const start = new Date(d); start.setHours(0,0,0,0)
     const end   = new Date(d); end.setHours(23,59,59,999)
@@ -315,7 +432,7 @@ function ThisWeek({ trips }) {
   const activeDays = distByDay.filter(d => d > 0).length
 
   return (
-    <div style={{ padding: '0 16px 4px' }}>
+    <button className="pressable" onClick={onGoTrips} style={{ padding: '0 16px 4px', display: 'block', width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
       <div style={{ background: 'var(--surface)', borderRadius: 20, border: '1px solid var(--border)', padding: '16px 18px', boxShadow: 'var(--shadow-soft)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
@@ -356,15 +473,14 @@ function ThisWeek({ trips }) {
                 <span style={{
                   fontSize: 9, fontWeight: isToday ? 800 : 600,
                   color: isToday ? '#fc4c02' : 'var(--text-mute)',
-                  fontFamily: "'Rajdhani', sans-serif",
-                  letterSpacing: 0.5,
-                }}>{DAY_LABELS[(days[i].getDay())]}</span>
+                  fontFamily: "'Rajdhani', sans-serif", letterSpacing: 0.5,
+                }}>{DAY_LABELS[days[i].getDay()]}</span>
               </div>
             )
           })}
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -374,9 +490,10 @@ function TripCard({ trip, places, onClick }) {
   const dCount = stops.filter(p => p.type === 'destination').length
 
   return (
-    <div className="pressable" onClick={onClick} style={{
+    <button className="pressable" onClick={onClick} style={{
       background: 'var(--surface)', borderRadius: 18, overflow: 'hidden',
       border: '1px solid var(--border)', boxShadow: 'var(--shadow-soft)',
+      width: '100%', textAlign: 'left', padding: 0, cursor: 'pointer',
     }}>
       <div style={{ position: 'relative', height: 108 }}>
         <RouteThumb path={trip.path} height={108} />
@@ -417,6 +534,6 @@ function TripCard({ trip, places, onClick }) {
           </div>
         )}
       </div>
-    </div>
+    </button>
   )
 }

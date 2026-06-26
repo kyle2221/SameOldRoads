@@ -159,11 +159,107 @@ export const SAMPLE_TRIPS = [
 ]
 
 export const SAMPLE_TRIP_PLACES = [
-  { id: 'tp-1-1', type: 'restaurant', name: 'Nepenthe', lat: 36.2704, lng: -121.8081, notes: 'Ambrosia burger right on the cliff edge. Worth the wait.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4 },
-  { id: 'tp-1-2', type: 'destination', name: 'McWay Falls', lat: 36.1577, lng: -121.6716, notes: '80ft waterfall dropping straight onto the beach.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4 },
-  { id: 'tp-1-3', type: 'destination', name: 'Elephant Seal Vista', lat: 35.6602, lng: -121.2549, notes: 'Hundreds of seals just lounging. Surreal.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4 },
-  { id: 'tp-2-1', type: 'destination', name: 'Clingmans Dome', lat: 35.5628, lng: -83.4985, notes: 'Highest point in the Smokies — 360° tower view.', tripId: 'trip-demo-2', createdAt: Date.now() - DAY * 12 },
-  { id: 'tp-2-2', type: 'restaurant', name: 'The Andrews Bald Picnic', lat: 35.5556, lng: -83.4944, notes: 'Packed sandwiches on the grassy bald. Perfect.', tripId: 'trip-demo-2', createdAt: Date.now() - DAY * 12 },
-  { id: 'tp-3-1', type: 'destination', name: 'Cholla Cactus Garden', lat: 33.9270, lng: -115.9267, notes: 'Glowing gold at golden hour. Bring a tripod.', tripId: 'trip-demo-3', createdAt: Date.now() - DAY * 1 },
-  { id: 'tp-3-2', type: 'destination', name: 'Keys View', lat: 33.9266, lng: -116.1869, notes: 'See the Salton Sea and San Andreas Fault from up top.', tripId: 'trip-demo-3', createdAt: Date.now() - DAY * 1 },
+  {
+    id: 'tp-1-1', type: 'restaurant', name: 'Nepenthe', lat: 36.2704, lng: -121.8081,
+    notes: 'Ambrosia burger right on the cliff edge. Worth the wait.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4,
+    google: {
+      rating: 4.5, reviews: 6214, price: '$$$', category: 'Californian restaurant',
+      address: '48510 CA-1, Big Sur, CA 93920', phone: '(831) 667-2345', website: 'https://nepenthe.com',
+      hours: 'Open ⋅ Closes 10 PM',
+      photos: [
+        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=70&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&q=70&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&q=70&auto=format&fit=crop',
+      ],
+      reviewsList: [
+        { author: 'Marcus T.', rating: 5, date: '2 weeks ago', likes: 42, text: 'The view alone is worth the drive. Got the Ambrosia burger and an Aperol spritz as the sun dropped over the Pacific. Unforgettable.' },
+        { author: 'Priya K.', rating: 5, date: 'a month ago', likes: 18, text: 'Pricey but you are paying for one of the best patios on Earth. Arrive before sunset and put your name in early.' },
+        { author: 'Dave R.', rating: 4, date: '3 months ago', likes: 7, text: 'Food is solid, service was friendly. It gets packed midday — go off-peak if you can. The terrace is magic.' },
+      ],
+    },
+  },
+  {
+    id: 'tp-1-2', type: 'destination', name: 'McWay Falls', lat: 36.1577, lng: -121.6716,
+    notes: '80ft waterfall dropping straight onto the beach.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4,
+    google: {
+      rating: 4.8, reviews: 9483, category: 'Scenic spot · Julia Pfeiffer Burns SP',
+      address: 'McWay Falls Trail, Big Sur, CA 93920', hours: 'Open ⋅ 8 AM–sunset',
+      photos: [
+        'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400&q=70&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=400&q=70&auto=format&fit=crop',
+      ],
+      reviewsList: [
+        { author: 'Elena M.', rating: 5, date: '1 week ago', likes: 64, text: 'Probably the most beautiful 0.6 mile walk in California. The waterfall onto the cove is unreal — go on a clear day.' },
+        { author: 'Tom B.', rating: 5, date: '2 months ago', likes: 23, text: 'Easy paved overlook trail, stroller friendly. Parking fills fast on weekends so come early or late.' },
+        { author: 'Sara W.', rating: 4, date: '4 months ago', likes: 9, text: 'Stunning but you cannot go down to the beach — it is protected. Still 100% worth the stop.' },
+      ],
+    },
+  },
+  {
+    id: 'tp-1-3', type: 'destination', name: 'Elephant Seal Vista', lat: 35.6602, lng: -121.2549,
+    notes: 'Hundreds of seals just lounging. Surreal.', tripId: 'trip-demo-1', createdAt: Date.now() - DAY * 4,
+    google: {
+      rating: 4.7, reviews: 5102, category: 'Wildlife viewing area',
+      address: 'Piedras Blancas, San Simeon, CA 93452', hours: 'Open 24 hours',
+      reviewsList: [
+        { author: 'Greg H.', rating: 5, date: '3 weeks ago', likes: 31, text: 'Free boardwalk right next to hundreds of elephant seals. The pups in winter are adorable. Bring a jacket, it is windy.' },
+        { author: 'Nina P.', rating: 5, date: '2 months ago', likes: 12, text: 'You can hear them from the parking lot. Docents are super knowledgeable. Such an easy and rewarding stop on the PCH.' },
+      ],
+    },
+  },
+  {
+    id: 'tp-2-1', type: 'destination', name: 'Clingmans Dome', lat: 35.5628, lng: -83.4985,
+    notes: 'Highest point in the Smokies — 360° tower view.', tripId: 'trip-demo-2', createdAt: Date.now() - DAY * 12,
+    google: {
+      rating: 4.7, reviews: 8967, category: 'Observation tower',
+      address: 'Clingmans Dome Rd, Bryson City, NC 28713', hours: 'Open ⋅ Road closes in winter',
+      photos: [
+        'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?w=400&q=70&auto=format&fit=crop',
+      ],
+      reviewsList: [
+        { author: 'Caleb J.', rating: 5, date: '1 month ago', likes: 27, text: 'The half-mile walk up is steep but paved. The spiral ramp tower gives a full 360 of the Smokies. Catch it at sunset.' },
+        { author: 'Maria L.', rating: 4, date: '2 months ago', likes: 11, text: 'Often foggy at the top so check the forecast. When it is clear you can see for 100 miles. Bring layers — cold up there.' },
+      ],
+    },
+  },
+  {
+    id: 'tp-2-2', type: 'restaurant', name: 'The Andrews Bald Picnic', lat: 35.5556, lng: -83.4944,
+    notes: 'Packed sandwiches on the grassy bald. Perfect.', tripId: 'trip-demo-2', createdAt: Date.now() - DAY * 12,
+    google: {
+      rating: 4.9, reviews: 412, category: 'Picnic area · Forney Ridge Trail',
+      address: 'Andrews Bald, Great Smoky Mountains NP', hours: 'Open ⋅ Daylight hours',
+      reviewsList: [
+        { author: 'Hannah F.', rating: 5, date: '5 weeks ago', likes: 19, text: 'A 3.5 mile round trip hike rewards you with a wide open grassy bald and panoramic views. Best picnic spot in the park.' },
+      ],
+    },
+  },
+  {
+    id: 'tp-3-1', type: 'destination', name: 'Cholla Cactus Garden', lat: 33.9270, lng: -115.9267,
+    notes: 'Glowing gold at golden hour. Bring a tripod.', tripId: 'trip-demo-3', createdAt: Date.now() - DAY * 1,
+    google: {
+      rating: 4.8, reviews: 3744, category: 'Nature preserve · Joshua Tree NP',
+      address: 'Pinto Basin Rd, Joshua Tree NP, CA', hours: 'Open 24 hours',
+      photos: [
+        'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=400&q=70&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1547234935-80c7145ec969?w=400&q=70&auto=format&fit=crop',
+      ],
+      reviewsList: [
+        { author: 'Leo S.', rating: 5, date: '2 weeks ago', likes: 38, text: 'The cholla backlit at golden hour literally glow. Quarter mile loop, totally flat. Do NOT touch them — they jump!' },
+        { author: 'Amy R.', rating: 5, date: '3 months ago', likes: 14, text: 'Otherworldly. Felt like another planet at sunrise with nobody around. A must-stop driving through the park.' },
+      ],
+    },
+  },
+  {
+    id: 'tp-3-2', type: 'destination', name: 'Keys View', lat: 33.9266, lng: -116.1869,
+    notes: 'See the Salton Sea and San Andreas Fault from up top.', tripId: 'trip-demo-3', createdAt: Date.now() - DAY * 1,
+    google: {
+      rating: 4.8, reviews: 4188, category: 'Scenic overlook · 5,185 ft',
+      address: 'Keys View Rd, Joshua Tree NP, CA', hours: 'Open 24 hours',
+      reviewsList: [
+        { author: 'Chris D.', rating: 5, date: '1 month ago', likes: 22, text: 'Drive right up to a 5,000 ft overlook. You can see the Salton Sea, Palm Springs, and the San Andreas Fault. Epic at sunset.' },
+        { author: 'Bex T.', rating: 4, date: '2 months ago', likes: 6, text: 'Gets very windy and cold. Short walk from the lot. Hazy some days but on a clear one you can see all the way to Mexico.' },
+      ],
+    },
+  },
 ]
+

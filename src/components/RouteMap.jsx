@@ -45,7 +45,9 @@ export default function RouteMap({ path = [], places = [], height = 200, interac
         tap: interactive,
       })
       mapRef.current = map
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 20,
+      }).addTo(map)
       map.invalidateSize()
 
       const drawLine = (latlngs) => {

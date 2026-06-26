@@ -16,9 +16,16 @@ export const useStore = create((set, get) => ({
   selectedRoute: null,
   followingRoute: null,
   flyToPlace: null,
+  pendingTripId: null,
+  toasts: [],
 
   setUser: (user) => set({ currentUser: user }),
-  logout: () => { signOut(); set({ currentUser: null, trips: [], places: [], routes: [], activeTrip: null, trackingActive: false, currentPath: [] }) },
+  logout: () => { signOut(); set({ currentUser: null, trips: [], places: [], routes: [], activeTrip: null, trackingActive: false, currentPath: [], toasts: [] }) },
+  toast: (message, type = 'success', opts = {}) => {
+    const id = uid()
+    set(s => ({ toasts: [...s.toasts.slice(-2), { id, message, type, ...opts }] }))
+  },
+  removeToast: (id) => set(s => ({ toasts: s.toasts.filter(t => t.id !== id) })),
 
   loadAll: async () => {
     // One-time demo seed: sample routes + completed trips + their stops, so a
@@ -44,6 +51,8 @@ export const useStore = create((set, get) => ({
   },
 
   setTab: (tab) => set({ activeTab: tab }),
+  openTrip: (tripId) => set({ activeTab: 'trips', pendingTripId: tripId }),
+  clearPendingTrip: () => set({ pendingTripId: null }),
 
   startTrip: async (name) => {
     const trip = {
@@ -57,6 +66,7 @@ export const useStore = create((set, get) => ({
     }
     await db.saveTrip(trip)
     set((s) => ({ trips: [trip, ...s.trips], activeTrip: trip, trackingActive: true, currentPath: [] }))
+    get().toast(`${name}`, 'info', { sub: 'Recording…' })
     return trip
   },
 
@@ -98,6 +108,9 @@ export const useStore = create((set, get) => ({
       avgSpeed,
     }
     await db.saveTrip(updated)
+    const km = (updated.distance / 1000).toFixed(1)
+    const sub = updated.distance > 500 ? `${km} km logged` : null
+    get().toast('Trip saved!', 'success', { sub })
     set((s) => ({
       activeTrip: null,
       trackingActive: false,
@@ -108,6 +121,8 @@ export const useStore = create((set, get) => ({
 
   addPlace: async (place) => {
     await db.savePlace(place)
+    const label = place.type === 'restaurant' ? 'Restaurant' : 'Destination'
+    get().toast(`${place.name}`, 'success', { sub: label })
     set((s) => ({ places: [...s.places, place] }))
   },
 
@@ -126,12 +141,16 @@ export const useStore = create((set, get) => ({
     set((s) => ({ trips: s.trips.filter((t) => t.id !== id), places: s.places.filter((p) => p.tripId !== id) }))
   },
 
-  followRoute: (route) => set({ followingRoute: route, activeTab: 'map' }),
+  followRoute: (route) => {
+    get().toast(route.name, 'route', { sub: 'Following route' })
+    set({ followingRoute: route, activeTab: 'map' })
+  },
   stopFollowing: () => set({ followingRoute: null }),
   setSelectedRoute: (route) => set({ selectedRoute: route }),
   setFlyToPlace: (place) => set({ flyToPlace: place }),
   saveOwnRoute: async (route) => {
     await db.saveRoute(route)
+    get().toast('Route saved!', 'success', { sub: route.name })
     set((s) => ({ routes: [...s.routes, route] }))
   },
   importHealthTrips: async (newTrips) => {
